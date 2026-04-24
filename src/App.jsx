@@ -16,11 +16,11 @@ function App() {
   const [status, setStatus] = useState('Pulsa "Iniciar cuento" para empezar.')
 
   // Historial simple del recorrido realizado dentro de la sesión actual.
-  // Se utilizará para habilitar el botón "Atrás" en escenas intermedias.
+  // Se utiliza para habilitar el botón "Atrás" en escenas intermedias.
   const [history, setHistory] = useState([])
 
-  // Variables narrativas sencillas que más adelante podrán servir
-  // para personalizar el epílogo o registrar el tipo de recorrido.
+  // Variables narrativas acumuladas durante el recorrido.
+  // Permiten reflejar el tipo de decisiones tomadas por el usuario.
   const [calmaScore, setCalmaScore] = useState(0)
   const [impulsoScore, setImpulsoScore] = useState(0)
 
@@ -70,8 +70,8 @@ function App() {
   }
 
   // Devuelve el impacto narrativo aproximado de una elección.
-  // De momento se usa una lógica simple basada en la etiqueta del botón.
-  // Más adelante podría trasladarse al archivo de datos del cuento.
+  // Esta lógica puede mejorarse más adelante trasladando estos valores
+  // directamente al archivo de datos del cuento.
   function calcularImpactoDecision(choiceLabel) {
     let calma = 0
     let impulso = 0
@@ -79,6 +79,8 @@ function App() {
     if (
       choiceLabel.includes('Respira') ||
       choiceLabel.includes('Ayuda') ||
+      choiceLabel.includes('escuchar con calma') ||
+      choiceLabel.includes('Observar') ||
       choiceLabel.includes('Sentarse') ||
       choiceLabel.includes('Abrazar')
     ) {
@@ -87,7 +89,9 @@ function App() {
 
     if (
       choiceLabel.includes('distrae') ||
-      choiceLabel.includes('Sigue a Mika')
+      choiceLabel.includes('Sigue a Mika') ||
+      choiceLabel.includes('Seguir el sonido') ||
+      choiceLabel.includes('Acercarse')
     ) {
       impulso = 1
     }
@@ -149,7 +153,6 @@ function App() {
   }
 
   // Reinicia la parte visual del cuento manteniendo la sesión ya creada.
-  // Se utiliza al llegar al epílogo para volver a comenzar el recorrido.
   function reiniciarRecorrido() {
     setScene('escena_1')
     setHistory([])
@@ -158,8 +161,27 @@ function App() {
     setStatus('Recorrido reiniciado.')
   }
 
+  // Genera el texto del epílogo según el tipo de recorrido realizado.
+  // El final sigue siendo común, pero el cierre se adapta al balance
+  // entre decisiones más impulsivas y decisiones más calmadas.
+  function obtenerTextoEpílogo() {
+    if (calmaScore > impulsoScore) {
+      return 'Hoy Luna ha encontrado muchas formas de estar tranquila. A lo largo del camino ha descubierto que detenerse, observar y respirar también forman parte de la aventura.'
+    }
+
+    if (impulsoScore > calmaScore) {
+      return 'Hoy Luna ha seguido con curiosidad muchos estímulos del bosque. En su recorrido ha descubierto que explorar también puede enseñarle a escucharse y encontrar la calma.'
+    }
+
+    return 'Hoy Luna ha combinado curiosidad y calma durante el viaje. El bosque le ha mostrado que existen muchas formas de avanzar y que cada recorrido puede enseñarle algo distinto.'
+  }
+
   // Obtiene los datos de la escena activa.
   const currentScene = lunaBosque[scene]
+
+  // Si la escena es el epílogo, se añade un texto dinámico complementario.
+  const epilogueText =
+    currentScene.isEnding ? obtenerTextoEpílogo() : null
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
@@ -190,6 +212,11 @@ function App() {
       <h2>{currentScene.title}</h2>
       <p><strong>ID de escena:</strong> {scene}</p>
       <p>{currentScene.text}</p>
+
+      {/* Texto adicional del epílogo según el recorrido realizado */}
+      {currentScene.isEnding && (
+        <p style={{ marginTop: '1rem' }}>{epilogueText}</p>
+      )}
 
       {/* Botones de elección para las escenas que todavía no son finales */}
       {currentScene.choices.map((choice) => (
