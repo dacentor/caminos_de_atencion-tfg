@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './supabase'
 import { lunaBosque } from './data/stories/lunaBosque'
+import P5Scene from './components/P5Scene'
 
 function App() {
   // Identificador del usuario creado en Supabase para la sesión actual.
@@ -16,15 +17,15 @@ function App() {
   const [status, setStatus] = useState('Pulsa "Iniciar cuento" para empezar.')
 
   // Historial simple del recorrido realizado dentro de la sesión actual.
-  // Se utiliza para habilitar el botón "Atrás" en escenas intermedias.
   const [history, setHistory] = useState([])
 
   // Variables narrativas acumuladas durante el recorrido.
-  // Permiten reflejar el tipo de decisiones tomadas por el usuario.
   const [calmaScore, setCalmaScore] = useState(0)
   const [impulsoScore, setImpulsoScore] = useState(0)
 
-  // Crea un usuario de prueba y una sesión nueva del cuento.
+  // Obtiene los datos de la escena activa.
+  const currentScene = lunaBosque[scene]
+
   async function iniciarCuento() {
     setStatus('Creando usuario...')
 
@@ -35,12 +36,13 @@ function App() {
       .single()
 
     if (userError) {
-      console.error('Error al crear usuario:', userError)
+      console.error(userError)
       setStatus('Error al crear usuario.')
       return
     }
 
     setUserId(userData.id)
+
     setStatus('Creando sesión...')
 
     const { data: sessionData, error: sessionError } = await supabase
@@ -55,12 +57,11 @@ function App() {
       .single()
 
     if (sessionError) {
-      console.error('Error al crear sesión:', sessionError)
+      console.error(sessionError)
       setStatus('Error al crear sesión.')
       return
     }
 
-    // Reinicia el estado narrativo al comenzar una nueva sesión.
     setSessionId(sessionData.id)
     setScene('escena_1')
     setHistory([])
@@ -69,9 +70,6 @@ function App() {
     setStatus('Sesión iniciada correctamente.')
   }
 
-  // Devuelve el impacto narrativo aproximado de una elección.
-  // Esta lógica puede mejorarse más adelante trasladando estos valores
-  // directamente al archivo de datos del cuento.
   function calcularImpactoDecision(choiceLabel) {
     let calma = 0
     let impulso = 0
@@ -99,7 +97,6 @@ function App() {
     return { calma, impulso }
   }
 
-  // Guarda en Supabase la decisión tomada y actualiza el estado narrativo local.
   async function guardarDecision(choice) {
     if (!sessionId) {
       setStatus('Primero tienes que iniciar el cuento.')
@@ -119,25 +116,18 @@ function App() {
       ])
 
     if (error) {
-      console.error('Error al guardar decisión:', error)
+      console.error(error)
       setStatus('Error al guardar la decisión.')
       return
     }
 
-    // Guarda la escena actual en el historial para permitir retroceder.
     setHistory((prevHistory) => [...prevHistory, scene])
-
-    // Actualiza las variables narrativas acumuladas.
     setCalmaScore((prevCalma) => prevCalma + calma)
     setImpulsoScore((prevImpulso) => prevImpulso + impulso)
-
-    // Avanza a la siguiente escena.
     setScene(choice.next)
     setStatus(`Decisión guardada: ${choice.label}`)
   }
 
-  // Permite volver a la escena anterior dentro del recorrido actual.
-  // En esta versión, retroceder solo afecta al estado local de la interfaz.
   function volverAtras() {
     if (history.length === 0) {
       setStatus('No hay escenas anteriores en el recorrido actual.')
@@ -145,14 +135,12 @@ function App() {
     }
 
     const previousScene = history[history.length - 1]
-    const updatedHistory = history.slice(0, -1)
 
     setScene(previousScene)
-    setHistory(updatedHistory)
+    setHistory((prevHistory) => prevHistory.slice(0, -1))
     setStatus('Has vuelto a la escena anterior.')
   }
 
-  // Reinicia la parte visual del cuento manteniendo la sesión ya creada.
   function reiniciarRecorrido() {
     setScene('escena_1')
     setHistory([])
@@ -161,10 +149,7 @@ function App() {
     setStatus('Recorrido reiniciado.')
   }
 
-  // Genera el texto del epílogo según el tipo de recorrido realizado.
-  // El final sigue siendo común, pero el cierre se adapta al balance
-  // entre decisiones más impulsivas y decisiones más calmadas.
-  function obtenerTextoEpílogo() {
+  function obtenerTextoEpilogo() {
     if (calmaScore > impulsoScore) {
       return 'Hoy Luna ha encontrado muchas formas de estar tranquila. A lo largo del camino ha descubierto que detenerse, observar y respirar también forman parte de la aventura.'
     }
@@ -176,66 +161,78 @@ function App() {
     return 'Hoy Luna ha combinado curiosidad y calma durante el viaje. El bosque le ha mostrado que existen muchas formas de avanzar y que cada recorrido puede enseñarle algo distinto.'
   }
 
-  // Obtiene los datos de la escena activa.
-  const currentScene = lunaBosque[scene]
-
-  // Si la escena es el epílogo, se añade un texto dinámico complementario.
-  const epilogueText =
-    currentScene.isEnding ? obtenerTextoEpílogo() : null
+  if (!currentScene) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
+        <h1>Caminos de Atención</h1>
+        <p>Escena no encontrada: {scene}</p>
+        <button onClick={reiniciarRecorrido}>Volver al inicio</button>
+      </main>
+    )
+  }
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
+    <main style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
       <h1>Caminos de Atención</h1>
 
-      {/* Estado general de la aplicación */}
-      <p><strong>Estado:</strong> {status}</p>
-      <p><strong>User ID:</strong> {userId || 'todavía no creado'}</p>
-      <p><strong>Session ID:</strong> {sessionId || 'todavía no creada'}</p>
+      <section style={{ marginBottom: '1rem' }}>
+        <p><strong>Estado:</strong> {status}</p>
+        <p><strong>User ID:</strong> {userId || 'todavía no creado'}</p>
+        <p><strong>Session ID:</strong> {sessionId || 'todavía no creada'}</p>
+        <p><strong>Escena activa:</strong> {scene}</p>
+        <p><strong>Calma:</strong> {calmaScore}</p>
+        <p><strong>Impulso:</strong> {impulsoScore}</p>
+      </section>
 
-      {/* Información simple de variables narrativas */}
-      <p><strong>Calma:</strong> {calmaScore}</p>
-      <p><strong>Impulso:</strong> {impulsoScore}</p>
+      <section style={{ marginBottom: '1rem' }}>
+        <button onClick={iniciarCuento} style={{ marginRight: '1rem' }}>
+          Iniciar cuento
+        </button>
 
-      {/* Botón para crear usuario y sesión antes de empezar el cuento */}
-      <button onClick={iniciarCuento} style={{ marginBottom: '2rem', marginRight: '1rem' }}>
-        Iniciar cuento
-      </button>
-
-      {/* Botón para retroceder dentro del recorrido actual */}
-      <button onClick={volverAtras} style={{ marginBottom: '2rem' }}>
-        Atrás
-      </button>
+        <button onClick={volverAtras} disabled={history.length === 0}>
+          Atrás
+        </button>
+      </section>
 
       <hr />
 
-      {/* Contenido principal de la escena activa */}
-      <h2>{currentScene.title}</h2>
-      <p><strong>ID de escena:</strong> {scene}</p>
-      <p>{currentScene.text}</p>
+      {/* Componente visual p5.js.
+          Si esto aparece, React está renderizando correctamente la capa visual. */}
+      <section style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+        <p style={{ color: 'red', fontWeight: 'bold' }}>
+          P5Scene cargado para: {scene}
+        </p>
 
-      {/* Texto adicional del epílogo según el recorrido realizado */}
-      {currentScene.isEnding && (
-        <p style={{ marginTop: '1rem' }}>{epilogueText}</p>
-      )}
+        <P5Scene scene={scene} />
+      </section>
 
-      {/* Botones de elección para las escenas que todavía no son finales */}
-      {currentScene.choices.map((choice) => (
-        <button
-          key={choice.label}
-          onClick={() => guardarDecision(choice)}
-          style={{ display: 'block', marginBottom: '1rem' }}
-        >
-          {choice.label}
-        </button>
-      ))}
+      <section>
+        <h2>{currentScene.title}</h2>
+        <p>{currentScene.text}</p>
 
-      {/* Si la escena es final, se muestra una opción para reiniciar */}
-      {currentScene.isEnding && (
-        <button onClick={reiniciarRecorrido} style={{ marginTop: '1rem' }}>
-          Volver al inicio
-        </button>
-      )}
-    </div>
+        {currentScene.isEnding && (
+          <p style={{ marginTop: '1rem' }}>
+            {obtenerTextoEpilogo()}
+          </p>
+        )}
+
+        {currentScene.choices.map((choice) => (
+          <button
+            key={choice.label}
+            onClick={() => guardarDecision(choice)}
+            style={{ display: 'block', marginBottom: '1rem' }}
+          >
+            {choice.label}
+          </button>
+        ))}
+
+        {currentScene.isEnding && (
+          <button onClick={reiniciarRecorrido}>
+            Volver al inicio
+          </button>
+        )}
+      </section>
+    </main>
   )
 }
 
