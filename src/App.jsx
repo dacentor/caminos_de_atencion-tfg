@@ -42,7 +42,6 @@ function App() {
     }
 
     setUserId(userData.id)
-
     setStatus('Creando sesión...')
 
     const { data: sessionData, error: sessionError } = await supabase
@@ -197,13 +196,10 @@ function App() {
       <hr />
 
       {/* Componente visual p5.js.
-          Si esto aparece, React está renderizando correctamente la capa visual. */}
+          React mantiene la lógica narrativa y Supabase;
+          p5 solo representa la imagen y las animaciones de la escena activa. */}
       <section style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-        <p style={{ color: 'red', fontWeight: 'bold' }}>
-          P5Scene cargado para: {scene}
-        </p>
-
-        <P5Scene scene={scene} />
+        <P5Scene scene={scene} image={currentScene.image} />
       </section>
 
       <section>

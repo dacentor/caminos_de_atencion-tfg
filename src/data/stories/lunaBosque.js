@@ -7,6 +7,7 @@ export const lunaBosque = {
   escena_1: {
     title: 'Comienzo del viaje',
     text: 'Luna inicia su camino con Kiro y Mika hacia el Bosque de las Mil Distracciones. Todo es color, movimiento y estímulos a su alrededor.',
+    image: '/assets/portada.png',
     choices: [
       {
         label: 'A. Se distrae con las mariposas',
@@ -23,6 +24,7 @@ export const lunaBosque = {
   escena_1A: {
     title: 'Resultado del comienzo',
     text: 'Luna se deja llevar por las mariposas junto a Mika. Kiro la espera en el camino con paciencia.',
+    image: '/assets/escena1A.png',
     choices: [
       {
         label: 'Seguir adelante',
@@ -35,6 +37,7 @@ export const lunaBosque = {
   escena_1B: {
     title: 'Resultado del comienzo',
     text: 'Luna respira hondo y decide seguir el camino con Kiro. Mika los acompaña desde el aire.',
+    image: '/assets/escena1B.png',
     choices: [
       {
         label: 'Seguir adelante',
@@ -47,6 +50,7 @@ export const lunaBosque = {
   escena_2: {
     title: 'El puente de ramas',
     text: 'Llegan a un río que corta el paso. Kiro empieza a construir un puente mientras Mika llama a Luna hacia algo brillante.',
+    image: '/assets/rio.png',
     choices: [
       {
         label: 'A. Sigue a Mika',
@@ -63,6 +67,7 @@ export const lunaBosque = {
   escena_2A: {
     title: 'Resultado del puente',
     text: 'Luna sigue a Mika durante un momento, descubre la belleza del bosque y después regresa para cruzar el puente.',
+    image: '/assets/rioA.png',
     choices: [
       {
         label: 'Continuar por el sendero',
@@ -75,6 +80,7 @@ export const lunaBosque = {
   escena_2B: {
     title: 'Resultado del puente',
     text: 'Luna ayuda a Kiro. Juntos terminan el puente y cruzan con calma al otro lado.',
+    image: '/assets/rioB.png',
     choices: [
       {
         label: 'Continuar por el sendero',
@@ -87,6 +93,7 @@ export const lunaBosque = {
   escena_3: {
     title: 'El sendero del silbido',
     text: 'Después del río, el bosque se vuelve más tranquilo. De pronto, Luna oye un silbido extraño que aparece y desaparece entre el viento.',
+    image: '/assets/sendero.png',
     choices: [
       {
         label: 'A. Seguir el sonido del silbido',
@@ -103,6 +110,7 @@ export const lunaBosque = {
   escena_3A: {
     title: 'Resultado del sendero del silbido',
     text: 'Luna sigue el sonido y descubre que viene del viento al pasar por una roca hueca. Mika revolotea a su alrededor mientras Kiro la alcanza poco después.',
+    image: '/assets/senderoA.png',
     choices: [
       {
         label: 'Seguir caminando',
@@ -115,6 +123,7 @@ export const lunaBosque = {
   escena_3B: {
     title: 'Resultado del sendero del silbido',
     text: 'Luna se detiene, respira y escucha con atención. Poco a poco comprende que el silbido cambia con el viento y descubre de dónde viene sin necesidad de correr tras él.',
+    image: '/assets/senderoB.png',
     choices: [
       {
         label: 'Seguir caminando',
@@ -127,6 +136,7 @@ export const lunaBosque = {
   escena_4: {
     title: 'El brillo entre las ramas',
     text: 'Un poco más adelante, Luna ve un destello suave entre unas ramas bajas. Al mirar mejor, descubre varias telas finas que reflejan la luz como si fueran hilos de cristal.',
+    image: '/assets/brillo.png',
     choices: [
       {
         label: 'A. Acercarse para mirar de cerca',
@@ -143,6 +153,7 @@ export const lunaBosque = {
   escena_4A: {
     title: 'Resultado del brillo entre las ramas',
     text: 'Luna se acerca despacio y descubre pequeños detalles en las telas brillantes. La luz cambia sobre los hilos y todo parece moverse con suavidad.',
+    image: '/assets/brilloA.png',
     choices: [
       {
         label: 'Continuar hacia el claro',
@@ -155,6 +166,7 @@ export const lunaBosque = {
   escena_4B: {
     title: 'Resultado del brillo entre las ramas',
     text: 'Luna se queda un momento observando desde donde está. Nota cómo la luz cambia sobre las telas y siente que no hace falta acercarse más para disfrutar del instante.',
+    image: '/assets/brilloB.png',
     choices: [
       {
         label: 'Continuar hacia el claro',
@@ -167,6 +179,7 @@ export const lunaBosque = {
   escena_5: {
     title: 'El claro de la calma',
     text: 'En el claro aparece la Flor de la Calma, brillando suavemente frente a Luna, Kiro y Mika.',
+    image: '/assets/claro.png',
     choices: [
       {
         label: 'A. Abrazar la flor',
@@ -183,6 +196,7 @@ export const lunaBosque = {
   escena_5A: {
     title: 'Resultado del claro',
     text: 'Luna abraza la flor luminosa. Siente la calma muy cerca, como un calor suave en el pecho.',
+    image: '/assets/florA.png',
     choices: [
       {
         label: 'Ir al epílogo',
@@ -195,6 +209,7 @@ export const lunaBosque = {
   escena_5B: {
     title: 'Resultado del claro',
     text: 'Luna se sienta junto a Kiro y Mika. Observan la flor brillar en silencio.',
+    image: '/assets/FlorB.png',
     choices: [
       {
         label: 'Ir al epílogo',
@@ -207,6 +222,7 @@ export const lunaBosque = {
   escena_6: {
     title: 'Epílogo',
     text: 'Luna regresa con Kiro y Mika. El bosque guarda el recuerdo de sus elecciones.',
+    image: '/assets/epilogo.png',
     choices: [],
     isEnding: true
   }
