@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { lunaBosque } from './data/stories/lunaBosque'
 import P5Scene from './components/P5Scene'
 
 function App() {
-  // Identificador del usuario creado en Supabase para la sesión actual.
-  const [userId, setUserId] = useState(null)
+  // Usuario adulto autenticado mediante Supabase Auth.
+  const [authUser, setAuthUser] = useState(null)
+
+  // Campos del formulario de acceso.
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  // Historial de sesiones asociadas al adulto autenticado.
+  const [sessions, setSessions] = useState([])
 
   // Identificador de la sesión narrativa actual.
   const [sessionId, setSessionId] = useState(null)
@@ -14,7 +21,7 @@ function App() {
   const [scene, setScene] = useState('escena_1')
 
   // Mensaje de estado mostrado en la interfaz.
-  const [status, setStatus] = useState('Pulsa "Iniciar cuento" para empezar.')
+  const [status, setStatus] = useState('Inicia sesión o regístrate para empezar.')
 
   // Historial simple del recorrido realizado dentro de la sesión actual.
   const [history, setHistory] = useState([])
@@ -26,29 +33,130 @@ function App() {
   // Obtiene los datos de la escena activa.
   const currentScene = lunaBosque[scene]
 
-  async function iniciarCuento() {
-    setStatus('Creando usuario...')
+  // Recupera una sesión activa si el usuario ya había iniciado sesión.
+  useEffect(() => {
+    async function obtenerSesionActual() {
+      const { data } = await supabase.auth.getUser()
 
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .insert([{ name: 'Usuario demo React' }])
-      .select()
-      .single()
+      if (data?.user) {
+        setAuthUser(data.user)
+        setStatus('Sesión de adulto recuperada correctamente.')
+        await cargarSesionesUsuario(data.user.id)
+      }
+    }
 
-    if (userError) {
-      console.error(userError)
-      setStatus('Error al crear usuario.')
+    obtenerSesionActual()
+  }, [])
+
+  async function cargarSesionesUsuario(userId) {
+    if (!userId) return
+
+    const { data, error } = await supabase
+      .from('story_sessions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('started_at', { ascending: false })
+
+    if (error) {
+      console.error(error)
+      setStatus('Error al cargar el historial de sesiones.')
       return
     }
 
-    setUserId(userData.id)
-    setStatus('Creando sesión...')
+    setSessions(data || [])
+  }
+
+  async function registrarse() {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password
+    })
+
+    if (error) {
+      console.error(error)
+      setStatus(`Error al registrar el usuario: ${error.message}`)
+      return
+    }
+
+    setAuthUser(data.user)
+    setStatus('Usuario registrado correctamente.')
+
+    if (data.user) {
+      await cargarSesionesUsuario(data.user.id)
+    }
+  }
+
+  async function iniciarSesion() {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) {
+      console.error(error)
+      setStatus(`Error al iniciar sesión: ${error.message}`)
+      return
+    }
+
+    setAuthUser(data.user)
+    setStatus('Sesión iniciada correctamente.')
+
+    if (data.user) {
+      await cargarSesionesUsuario(data.user.id)
+    }
+  }
+
+  async function cerrarSesion() {
+    await supabase.auth.signOut()
+
+    setAuthUser(null)
+    setSessions([])
+    setSessionId(null)
+    setScene('escena_1')
+    setHistory([])
+    setCalmaScore(0)
+    setImpulsoScore(0)
+    setStatus('Sesión cerrada.')
+  }
+
+  async function asegurarPerfilPublico(user) {
+    const { error } = await supabase
+      .from('users')
+      .upsert([
+        {
+          id: user.id,
+          name: user.email
+        }
+      ])
+
+    if (error) {
+      console.error(error)
+      setStatus(`Error al preparar el perfil del usuario: ${error.message}`)
+      return false
+    }
+
+    return true
+  }
+
+  async function iniciarCuento() {
+    if (!authUser) {
+      setStatus('Primero debes iniciar sesión con una cuenta adulta.')
+      return
+    }
+
+    setStatus('Preparando perfil...')
+
+    const perfilCorrecto = await asegurarPerfilPublico(authUser)
+
+    if (!perfilCorrecto) return
+
+    setStatus('Creando sesión del cuento...')
 
     const { data: sessionData, error: sessionError } = await supabase
       .from('story_sessions')
       .insert([
         {
-          user_id: userData.id,
+          user_id: authUser.id,
           story_id: 'luna_bosque'
         }
       ])
@@ -57,7 +165,7 @@ function App() {
 
     if (sessionError) {
       console.error(sessionError)
-      setStatus('Error al crear sesión.')
+      setStatus(`Error al crear sesión: ${sessionError.message}`)
       return
     }
 
@@ -66,7 +174,9 @@ function App() {
     setHistory([])
     setCalmaScore(0)
     setImpulsoScore(0)
-    setStatus('Sesión iniciada correctamente.')
+    setStatus('Cuento iniciado correctamente.')
+
+    await cargarSesionesUsuario(authUser.id)
   }
 
   function calcularImpactoDecision(choiceLabel) {
@@ -116,7 +226,7 @@ function App() {
 
     if (error) {
       console.error(error)
-      setStatus('Error al guardar la decisión.')
+      setStatus(`Error al guardar la decisión: ${error.message}`)
       return
     }
 
@@ -160,6 +270,8 @@ function App() {
     return 'Hoy Luna ha combinado curiosidad y calma durante el viaje. El bosque le ha mostrado que existen muchas formas de avanzar y que cada recorrido puede enseñarle algo distinto.'
   }
 
+  const ultimaSesion = sessions[0]
+
   if (!currentScene) {
     return (
       <main style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
@@ -176,28 +288,75 @@ function App() {
 
       <section style={{ marginBottom: '1rem' }}>
         <p><strong>Estado:</strong> {status}</p>
-        <p><strong>User ID:</strong> {userId || 'todavía no creado'}</p>
-        <p><strong>Session ID:</strong> {sessionId || 'todavía no creada'}</p>
-        <p><strong>Escena activa:</strong> {scene}</p>
-        <p><strong>Calma:</strong> {calmaScore}</p>
-        <p><strong>Impulso:</strong> {impulsoScore}</p>
       </section>
 
-      <section style={{ marginBottom: '1rem' }}>
-        <button onClick={iniciarCuento} style={{ marginRight: '1rem' }}>
-          Iniciar cuento
-        </button>
+      {!authUser && (
+        <section style={{ marginBottom: '1rem' }}>
+          <input
+            type="email"
+            placeholder="Email del adulto"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{ marginRight: '0.5rem' }}
+          />
 
-        <button onClick={volverAtras} disabled={history.length === 0}>
-          Atrás
-        </button>
-      </section>
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ marginRight: '0.5rem' }}
+          />
+
+          <button onClick={registrarse} style={{ marginRight: '0.5rem' }}>
+            Registrarse
+          </button>
+
+          <button onClick={iniciarSesion}>
+            Iniciar sesión
+          </button>
+        </section>
+      )}
+
+      {authUser && (
+        <>
+          <details style={{ marginBottom: '1rem' }}>
+            <summary>Panel adulto</summary>
+            <p><strong>Cuenta:</strong> {authUser.email}</p>
+            <p><strong>Sesiones guardadas:</strong> {sessions.length}</p>
+            <p><strong>Sesión actual:</strong> {sessionId || 'todavía no creada'}</p>
+            <p><strong>Calma actual:</strong> {calmaScore}</p>
+            <p><strong>Impulso actual:</strong> {impulsoScore}</p>
+            <p>
+              <strong>Última sesión:</strong>{' '}
+              {ultimaSesion
+                ? new Date(ultimaSesion.started_at).toLocaleString()
+                : 'sin sesiones previas'}
+            </p>
+          </details>
+
+          <section style={{ marginBottom: '1rem' }}>
+            <button onClick={iniciarCuento} style={{ marginRight: '1rem' }}>
+              Iniciar cuento
+            </button>
+
+            <button
+              onClick={volverAtras}
+              disabled={history.length === 0}
+              style={{ marginRight: '1rem' }}
+            >
+              Atrás
+            </button>
+
+            <button onClick={cerrarSesion}>
+              Cerrar sesión
+            </button>
+          </section>
+        </>
+      )}
 
       <hr />
 
-      {/* Componente visual p5.js.
-          React mantiene la lógica narrativa y Supabase;
-          p5 solo representa la imagen y las animaciones de la escena activa. */}
       <section style={{ marginTop: '1rem', marginBottom: '1rem' }}>
         <P5Scene scene={scene} image={currentScene.image} />
       </section>
@@ -216,6 +375,7 @@ function App() {
           <button
             key={choice.label}
             onClick={() => guardarDecision(choice)}
+            disabled={!sessionId}
             style={{ display: 'block', marginBottom: '1rem' }}
           >
             {choice.label}
