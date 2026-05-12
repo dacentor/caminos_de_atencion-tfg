@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { lunaBosque } from './data/stories/lunaBosque'
 import P5Scene from './components/P5Scene'
@@ -30,6 +30,17 @@ function App() {
   const [calmaScore, setCalmaScore] = useState(0)
   const [impulsoScore, setImpulsoScore] = useState(0)
 
+  // Estado del sonido.
+  const [soundEnabled, setSoundEnabled] = useState(false)
+
+  // Referencias de audio.
+  const bosqueAudioRef = useRef(null)
+  const aguaAudioRef = useRef(null)
+  const calmaAudioRef = useRef(null)
+  const silbidoVientoAudioRef = useRef(null)
+  const claroEntradaAudioRef = useRef(null)
+  const claroEntradaPlayedRef = useRef(false)
+
   // Obtiene los datos de la escena activa.
   const currentScene = lunaBosque[scene]
 
@@ -47,6 +58,150 @@ function App() {
 
     obtenerSesionActual()
   }, [])
+
+  // Prepara los audios una sola vez.
+  useEffect(() => {
+    bosqueAudioRef.current = new Audio('/audio/bosque.mp3')
+    aguaAudioRef.current = new Audio('/audio/agua.mp3')
+    calmaAudioRef.current = new Audio('/audio/calma.mp3')
+    silbidoVientoAudioRef.current = new Audio('/audio/silbido_viento.mp3')
+    claroEntradaAudioRef.current = new Audio('/audio/claro_entrada.mp3')
+
+    const loopAudios = [
+      bosqueAudioRef.current,
+      aguaAudioRef.current,
+      calmaAudioRef.current,
+      silbidoVientoAudioRef.current
+    ]
+
+    loopAudios.forEach((audio) => {
+      audio.loop = true
+      audio.volume = 0
+    })
+
+    if (claroEntradaAudioRef.current) {
+      claroEntradaAudioRef.current.loop = false
+      claroEntradaAudioRef.current.volume = 0.28
+    }
+
+    return () => {
+      loopAudios.forEach((audio) => {
+        audio.pause()
+        audio.currentTime = 0
+      })
+
+      if (claroEntradaAudioRef.current) {
+        claroEntradaAudioRef.current.pause()
+        claroEntradaAudioRef.current.currentTime = 0
+      }
+    }
+  }, [])
+
+  // Actualiza el ambiente sonoro según la escena activa.
+  useEffect(() => {
+    if (!soundEnabled) return
+
+    const bosqueAudio = bosqueAudioRef.current
+    const aguaAudio = aguaAudioRef.current
+    const calmaAudio = calmaAudioRef.current
+    const silbidoVientoAudio = silbidoVientoAudioRef.current
+
+    if (!bosqueAudio || !aguaAudio || !calmaAudio || !silbidoVientoAudio) return
+
+    bosqueAudio.play().catch(() => {})
+    aguaAudio.play().catch(() => {})
+    calmaAudio.play().catch(() => {})
+    silbidoVientoAudio.play().catch(() => {})
+
+    let bosqueVolume = 0.16
+    let aguaVolume = 0
+    let calmaVolume = 0
+    let silbidoVientoVolume = 0
+
+    if (scene.startsWith('escena_2')) {
+      bosqueVolume = 0.08
+      aguaVolume = 0.22
+      calmaVolume = 0
+      silbidoVientoVolume = 0
+    }
+
+    if (scene.startsWith('escena_3')) {
+      bosqueVolume = 0.1
+      aguaVolume = 0
+      calmaVolume = 0.03
+      silbidoVientoVolume = 0.2
+    }
+
+    if (scene.startsWith('escena_4')) {
+      bosqueVolume = 0.14
+      aguaVolume = 0
+      calmaVolume = 0.04
+      silbidoVientoVolume = 0
+    }
+
+    if (scene.startsWith('escena_5')) {
+      bosqueVolume = 0.08
+      aguaVolume = 0
+      calmaVolume = 0.2
+      silbidoVientoVolume = 0
+
+      if (!claroEntradaPlayedRef.current && claroEntradaAudioRef.current) {
+        claroEntradaAudioRef.current.currentTime = 0
+        claroEntradaAudioRef.current.play().catch(() => {})
+        claroEntradaPlayedRef.current = true
+      }
+    }
+
+    if (scene === 'escena_6') {
+      bosqueVolume = 0.04
+      aguaVolume = 0
+      calmaVolume = 0.16
+      silbidoVientoVolume = 0
+    }
+
+    bosqueAudio.volume = bosqueVolume
+    aguaAudio.volume = aguaVolume
+    calmaAudio.volume = calmaVolume
+    silbidoVientoAudio.volume = silbidoVientoVolume
+  }, [scene, soundEnabled])
+
+  async function activarSonido() {
+    setSoundEnabled(true)
+    setStatus('Sonido activado.')
+
+    const audios = [
+      bosqueAudioRef.current,
+      aguaAudioRef.current,
+      calmaAudioRef.current,
+      silbidoVientoAudioRef.current
+    ]
+
+    for (const audio of audios) {
+      if (audio) {
+        audio.play().catch(() => {})
+      }
+    }
+  }
+
+  function desactivarSonido() {
+    setSoundEnabled(false)
+    setStatus('Sonido desactivado.')
+
+    const audios = [
+      bosqueAudioRef.current,
+      aguaAudioRef.current,
+      calmaAudioRef.current,
+      silbidoVientoAudioRef.current,
+      claroEntradaAudioRef.current
+    ]
+
+    audios.forEach((audio) => {
+      if (audio) {
+        audio.pause()
+        audio.currentTime = 0
+      }
+    })
+  }
 
   async function cargarSesionesUsuario(userId) {
     if (!userId) return
@@ -116,6 +271,7 @@ function App() {
     setHistory([])
     setCalmaScore(0)
     setImpulsoScore(0)
+    desactivarSonido()
     setStatus('Sesión cerrada.')
   }
 
@@ -169,6 +325,7 @@ function App() {
       return
     }
 
+    claroEntradaPlayedRef.current = false
     setSessionId(sessionData.id)
     setScene('escena_1')
     setHistory([])
@@ -251,6 +408,7 @@ function App() {
   }
 
   function reiniciarRecorrido() {
+    claroEntradaPlayedRef.current = false
     setScene('escena_1')
     setHistory([])
     setCalmaScore(0)
@@ -337,271 +495,114 @@ function App() {
 
   if (!currentScene) {
     return (
-      <main
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#F1FAEE',
-          padding: '2rem',
-          fontFamily: 'Lexend Deca, Arial, sans-serif'
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '900px',
-            margin: '0 auto',
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '2rem',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
-          }}
-        >
-          <h1 style={{ textAlign: 'center', color: '#1D3557' }}>
-            Caminos de Atención
-          </h1>
+      <main style={{ minHeight: '100vh', backgroundColor: '#F1FAEE', padding: '2rem', fontFamily: 'Lexend Deca, Arial, sans-serif' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', backgroundColor: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
+          <h1 style={{ textAlign: 'center', color: '#1D3557' }}>Caminos de Atención</h1>
           <p>Escena no encontrada: {scene}</p>
-          <button onClick={reiniciarRecorrido} style={primaryButtonStyle}>
-            Volver al inicio
-          </button>
+          <button onClick={reiniciarRecorrido} style={primaryButtonStyle}>Volver al inicio</button>
         </div>
       </main>
     )
   }
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#F1FAEE',
-        padding: '2rem',
-        fontFamily: 'Lexend Deca, Arial, sans-serif'
-      }}
-    >
-      <div
-        style={{
-          maxWidth: '960px',
-          margin: '0 auto',
-          backgroundColor: 'white',
-          borderRadius: '24px',
-          padding: '2rem',
-          boxShadow: '0 12px 34px rgba(29, 53, 87, 0.14)'
-        }}
-      >
+    <main style={{ minHeight: '100vh', backgroundColor: '#F1FAEE', padding: '2rem', fontFamily: 'Lexend Deca, Arial, sans-serif' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', backgroundColor: 'white', borderRadius: '24px', padding: '2rem', boxShadow: '0 12px 34px rgba(29, 53, 87, 0.14)' }}>
         <header style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <h1
-            style={{
-              marginBottom: '0.5rem',
-              color: '#1D3557',
-              fontSize: '2.4rem'
-            }}
-          >
+          <h1 style={{ marginBottom: '0.5rem', color: '#1D3557', fontSize: '2.4rem' }}>
             Caminos de Atención
           </h1>
-
-          <p
-            style={{
-              margin: 0,
-              color: '#457B9D',
-              fontSize: '1rem'
-            }}
-          >
-            {status}
-          </p>
+          <p style={{ margin: 0, color: '#457B9D', fontSize: '1rem' }}>{status}</p>
         </header>
 
         {!authUser && (
-          <section
-            style={{
-              margin: '1.5rem auto',
-              padding: '1.2rem',
-              borderRadius: '18px',
-              backgroundColor: '#F1FAEE',
-              border: '1px solid #A8DADC',
-              textAlign: 'center'
-            }}
-          >
-            <h2 style={{ color: '#1D3557', marginTop: 0 }}>
-              Acceso adulto
-            </h2>
+          <section style={{ margin: '1.5rem auto', padding: '1.2rem', borderRadius: '18px', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', textAlign: 'center' }}>
+            <h2 style={{ color: '#1D3557', marginTop: 0 }}>Acceso adulto</h2>
+            <p style={{ color: '#457B9D' }}>Inicia sesión para guardar el recorrido del cuento.</p>
 
-            <p style={{ color: '#457B9D' }}>
-              Inicia sesión para guardar el recorrido del cuento.
-            </p>
-
-            <input
-              type="email"
-              placeholder="Email del adulto"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
-            />
-
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={inputStyle}
-            />
+            <input type="email" placeholder="Email del adulto" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+            <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
 
             <div>
-              <button onClick={registrarse} style={primaryButtonStyle}>
-                Registrarse
-              </button>
-
-              <button onClick={iniciarSesion} style={secondaryButtonStyle}>
-                Iniciar sesión
-              </button>
+              <button onClick={registrarse} style={primaryButtonStyle}>Registrarse</button>
+              <button onClick={iniciarSesion} style={secondaryButtonStyle}>Iniciar sesión</button>
             </div>
           </section>
         )}
 
         {authUser && (
           <>
-            <details
-              style={{
-                marginBottom: '1rem',
-                padding: '1rem',
-                borderRadius: '16px',
-                backgroundColor: '#F1FAEE',
-                border: '1px solid #A8DADC'
-              }}
-            >
-              <summary
-                style={{
-                  cursor: 'pointer',
-                  color: '#1D3557',
-                  fontWeight: 'bold'
-                }}
-              >
-                Panel adulto
-              </summary>
+            <details style={{ marginBottom: '1rem', padding: '1rem', borderRadius: '16px', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC' }}>
+              <summary style={{ cursor: 'pointer', color: '#1D3557', fontWeight: 'bold' }}>Panel adulto</summary>
 
-              <div
-                style={{
-                  marginTop: '0.8rem',
-                  display: 'grid',
-                  gap: '0.4rem',
-                  color: '#1D3557',
-                  fontSize: '0.95rem'
-                }}
-              >
+              <div style={{ marginTop: '0.8rem', display: 'grid', gap: '0.4rem', color: '#1D3557', fontSize: '0.95rem' }}>
                 <span><strong>Cuenta:</strong> {authUser.email}</span>
                 <span><strong>Sesiones guardadas:</strong> {sessions.length}</span>
                 <span><strong>Sesión actual:</strong> {sessionId || 'todavía no creada'}</span>
                 <span><strong>Calma actual:</strong> {calmaScore}</span>
                 <span><strong>Impulso actual:</strong> {impulsoScore}</span>
+                <span><strong>Sonido:</strong> {soundEnabled ? 'activado' : 'desactivado'}</span>
                 <span>
                   <strong>Última sesión:</strong>{' '}
-                  {ultimaSesion
-                    ? new Date(ultimaSesion.started_at).toLocaleString()
-                    : 'sin sesiones previas'}
+                  {ultimaSesion ? new Date(ultimaSesion.started_at).toLocaleString() : 'sin sesiones previas'}
                 </span>
               </div>
             </details>
 
             <section style={{ textAlign: 'center', marginBottom: '1rem' }}>
-              <button onClick={iniciarCuento} style={secondaryButtonStyle}>
-                Iniciar cuento
-              </button>
+              <button onClick={iniciarCuento} style={secondaryButtonStyle}>Iniciar cuento</button>
 
-              <button
-                onClick={volverAtras}
-                disabled={history.length === 0}
-                style={history.length === 0 ? disabledButtonStyle : neutralButtonStyle}
-              >
+              <button onClick={volverAtras} disabled={history.length === 0} style={history.length === 0 ? disabledButtonStyle : neutralButtonStyle}>
                 Atrás
               </button>
 
-              <button onClick={cerrarSesion} style={primaryButtonStyle}>
-                Cerrar sesión
-              </button>
+              {!soundEnabled ? (
+                <button onClick={activarSonido} style={neutralButtonStyle}>Activar sonido</button>
+              ) : (
+                <button onClick={desactivarSonido} style={neutralButtonStyle}>Desactivar sonido</button>
+              )}
+
+              <button onClick={cerrarSesion} style={primaryButtonStyle}>Cerrar sesión</button>
             </section>
           </>
         )}
 
-        <hr
-          style={{
-            margin: '1.5rem 0',
-            border: 'none',
-            borderTop: '1px solid #A8DADC'
-          }}
-        />
+        <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid #A8DADC' }} />
 
         <section style={{ marginTop: '1rem', marginBottom: '1rem' }}>
           <P5Scene scene={scene} image={currentScene.image} />
         </section>
 
         {authUser && !sessionId && (
-          <p
-            style={{
-              textAlign: 'center',
-              fontStyle: 'italic',
-              color: '#457B9D',
-              fontSize: '1.05rem'
-            }}
-          >
+          <p style={{ textAlign: 'center', fontStyle: 'italic', color: '#457B9D', fontSize: '1.05rem' }}>
             Pulsa “Iniciar cuento” para comenzar la aventura 🌿
           </p>
         )}
 
         {sessionId && (
-          <section
-            style={{
-              marginTop: '1.5rem',
-              textAlign: 'center'
-            }}
-          >
-            <h2
-              style={{
-                color: '#1D3557',
-                fontSize: '1.8rem',
-                marginBottom: '0.8rem'
-              }}
-            >
+          <section style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <h2 style={{ color: '#1D3557', fontSize: '1.8rem', marginBottom: '0.8rem' }}>
               {currentScene.title}
             </h2>
 
-            <p
-              style={{
-                maxWidth: '760px',
-                margin: '0 auto 1.2rem auto',
-                color: '#1D3557',
-                fontSize: '1.12rem',
-                lineHeight: '1.7'
-              }}
-            >
+            <p style={{ maxWidth: '760px', margin: '0 auto 1.2rem auto', color: '#1D3557', fontSize: '1.12rem', lineHeight: '1.7' }}>
               {currentScene.text}
             </p>
 
             {currentScene.isEnding && (
-              <p
-                style={{
-                  maxWidth: '760px',
-                  margin: '0 auto 1.2rem auto',
-                  color: '#1D3557',
-                  fontSize: '1.12rem',
-                  lineHeight: '1.7'
-                }}
-              >
+              <p style={{ maxWidth: '760px', margin: '0 auto 1.2rem auto', color: '#1D3557', fontSize: '1.12rem', lineHeight: '1.7' }}>
                 {obtenerTextoEpilogo()}
               </p>
             )}
 
             {currentScene.choices.map((choice) => (
-              <button
-                key={choice.label}
-                onClick={() => guardarDecision(choice)}
-                disabled={!sessionId}
-                style={choiceButtonStyle}
-              >
+              <button key={choice.label} onClick={() => guardarDecision(choice)} disabled={!sessionId} style={choiceButtonStyle}>
                 {choice.label}
               </button>
             ))}
 
             {currentScene.isEnding && (
-              <button onClick={reiniciarRecorrido} style={secondaryButtonStyle}>
-                Volver al inicio
-              </button>
+              <button onClick={reiniciarRecorrido} style={secondaryButtonStyle}>Volver al inicio</button>
             )}
           </section>
         )}
