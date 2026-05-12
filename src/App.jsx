@@ -272,122 +272,340 @@ function App() {
 
   const ultimaSesion = sessions[0]
 
+  const primaryButtonStyle = {
+    margin: '0.5rem',
+    padding: '0.8rem 1.2rem',
+    borderRadius: '12px',
+    backgroundColor: '#1D3557',
+    color: 'white',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem'
+  }
+
+  const secondaryButtonStyle = {
+    margin: '0.5rem',
+    padding: '0.8rem 1.2rem',
+    borderRadius: '12px',
+    backgroundColor: '#A8DADC',
+    color: '#1D3557',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem'
+  }
+
+  const neutralButtonStyle = {
+    margin: '0.5rem',
+    padding: '0.8rem 1.2rem',
+    borderRadius: '12px',
+    backgroundColor: '#F6C977',
+    color: '#1D3557',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem'
+  }
+
+  const choiceButtonStyle = {
+    display: 'block',
+    width: '100%',
+    maxWidth: '460px',
+    margin: '1rem auto',
+    padding: '1rem 1.2rem',
+    borderRadius: '14px',
+    border: 'none',
+    backgroundColor: '#1D3557',
+    color: 'white',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    lineHeight: '1.4'
+  }
+
+  const disabledButtonStyle = {
+    ...neutralButtonStyle,
+    opacity: 0.5,
+    cursor: 'not-allowed'
+  }
+
+  const inputStyle = {
+    margin: '0.5rem',
+    padding: '0.75rem',
+    borderRadius: '10px',
+    border: '1px solid #A8DADC',
+    minWidth: '220px',
+    fontSize: '1rem'
+  }
+
   if (!currentScene) {
     return (
-      <main style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-        <h1>Caminos de Atención</h1>
-        <p>Escena no encontrada: {scene}</p>
-        <button onClick={reiniciarRecorrido}>Volver al inicio</button>
+      <main
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#F1FAEE',
+          padding: '2rem',
+          fontFamily: 'Lexend Deca, Arial, sans-serif'
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '900px',
+            margin: '0 auto',
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '2rem',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <h1 style={{ textAlign: 'center', color: '#1D3557' }}>
+            Caminos de Atención
+          </h1>
+          <p>Escena no encontrada: {scene}</p>
+          <button onClick={reiniciarRecorrido} style={primaryButtonStyle}>
+            Volver al inicio
+          </button>
+        </div>
       </main>
     )
   }
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Caminos de Atención</h1>
+    <main
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#F1FAEE',
+        padding: '2rem',
+        fontFamily: 'Lexend Deca, Arial, sans-serif'
+      }}
+    >
+      <div
+        style={{
+          maxWidth: '960px',
+          margin: '0 auto',
+          backgroundColor: 'white',
+          borderRadius: '24px',
+          padding: '2rem',
+          boxShadow: '0 12px 34px rgba(29, 53, 87, 0.14)'
+        }}
+      >
+        <header style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <h1
+            style={{
+              marginBottom: '0.5rem',
+              color: '#1D3557',
+              fontSize: '2.4rem'
+            }}
+          >
+            Caminos de Atención
+          </h1>
 
-      <section style={{ marginBottom: '1rem' }}>
-        <p><strong>Estado:</strong> {status}</p>
-      </section>
+          <p
+            style={{
+              margin: 0,
+              color: '#457B9D',
+              fontSize: '1rem'
+            }}
+          >
+            {status}
+          </p>
+        </header>
 
-      {!authUser && (
-        <section style={{ marginBottom: '1rem' }}>
-          <input
-            type="email"
-            placeholder="Email del adulto"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ marginRight: '0.5rem' }}
-          />
+        {!authUser && (
+          <section
+            style={{
+              margin: '1.5rem auto',
+              padding: '1.2rem',
+              borderRadius: '18px',
+              backgroundColor: '#F1FAEE',
+              border: '1px solid #A8DADC',
+              textAlign: 'center'
+            }}
+          >
+            <h2 style={{ color: '#1D3557', marginTop: 0 }}>
+              Acceso adulto
+            </h2>
 
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ marginRight: '0.5rem' }}
-          />
-
-          <button onClick={registrarse} style={{ marginRight: '0.5rem' }}>
-            Registrarse
-          </button>
-
-          <button onClick={iniciarSesion}>
-            Iniciar sesión
-          </button>
-        </section>
-      )}
-
-      {authUser && (
-        <>
-          <details style={{ marginBottom: '1rem' }}>
-            <summary>Panel adulto</summary>
-            <p><strong>Cuenta:</strong> {authUser.email}</p>
-            <p><strong>Sesiones guardadas:</strong> {sessions.length}</p>
-            <p><strong>Sesión actual:</strong> {sessionId || 'todavía no creada'}</p>
-            <p><strong>Calma actual:</strong> {calmaScore}</p>
-            <p><strong>Impulso actual:</strong> {impulsoScore}</p>
-            <p>
-              <strong>Última sesión:</strong>{' '}
-              {ultimaSesion
-                ? new Date(ultimaSesion.started_at).toLocaleString()
-                : 'sin sesiones previas'}
+            <p style={{ color: '#457B9D' }}>
+              Inicia sesión para guardar el recorrido del cuento.
             </p>
-          </details>
 
-          <section style={{ marginBottom: '1rem' }}>
-            <button onClick={iniciarCuento} style={{ marginRight: '1rem' }}>
-              Iniciar cuento
-            </button>
+            <input
+              type="email"
+              placeholder="Email del adulto"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={inputStyle}
+            />
 
-            <button
-              onClick={volverAtras}
-              disabled={history.length === 0}
-              style={{ marginRight: '1rem' }}
-            >
-              Atrás
-            </button>
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={inputStyle}
+            />
 
-            <button onClick={cerrarSesion}>
-              Cerrar sesión
-            </button>
+            <div>
+              <button onClick={registrarse} style={primaryButtonStyle}>
+                Registrarse
+              </button>
+
+              <button onClick={iniciarSesion} style={secondaryButtonStyle}>
+                Iniciar sesión
+              </button>
+            </div>
           </section>
-        </>
-      )}
+        )}
 
-      <hr />
+        {authUser && (
+          <>
+            <details
+              style={{
+                marginBottom: '1rem',
+                padding: '1rem',
+                borderRadius: '16px',
+                backgroundColor: '#F1FAEE',
+                border: '1px solid #A8DADC'
+              }}
+            >
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  color: '#1D3557',
+                  fontWeight: 'bold'
+                }}
+              >
+                Panel adulto
+              </summary>
 
-      <section style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-        <P5Scene scene={scene} image={currentScene.image} />
-      </section>
+              <div
+                style={{
+                  marginTop: '0.8rem',
+                  display: 'grid',
+                  gap: '0.4rem',
+                  color: '#1D3557',
+                  fontSize: '0.95rem'
+                }}
+              >
+                <span><strong>Cuenta:</strong> {authUser.email}</span>
+                <span><strong>Sesiones guardadas:</strong> {sessions.length}</span>
+                <span><strong>Sesión actual:</strong> {sessionId || 'todavía no creada'}</span>
+                <span><strong>Calma actual:</strong> {calmaScore}</span>
+                <span><strong>Impulso actual:</strong> {impulsoScore}</span>
+                <span>
+                  <strong>Última sesión:</strong>{' '}
+                  {ultimaSesion
+                    ? new Date(ultimaSesion.started_at).toLocaleString()
+                    : 'sin sesiones previas'}
+                </span>
+              </div>
+            </details>
 
-      <section>
-        <h2>{currentScene.title}</h2>
-        <p>{currentScene.text}</p>
+            <section style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <button onClick={iniciarCuento} style={secondaryButtonStyle}>
+                Iniciar cuento
+              </button>
 
-        {currentScene.isEnding && (
-          <p style={{ marginTop: '1rem' }}>
-            {obtenerTextoEpilogo()}
+              <button
+                onClick={volverAtras}
+                disabled={history.length === 0}
+                style={history.length === 0 ? disabledButtonStyle : neutralButtonStyle}
+              >
+                Atrás
+              </button>
+
+              <button onClick={cerrarSesion} style={primaryButtonStyle}>
+                Cerrar sesión
+              </button>
+            </section>
+          </>
+        )}
+
+        <hr
+          style={{
+            margin: '1.5rem 0',
+            border: 'none',
+            borderTop: '1px solid #A8DADC'
+          }}
+        />
+
+        <section style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+          <P5Scene scene={scene} image={currentScene.image} />
+        </section>
+
+        {authUser && !sessionId && (
+          <p
+            style={{
+              textAlign: 'center',
+              fontStyle: 'italic',
+              color: '#457B9D',
+              fontSize: '1.05rem'
+            }}
+          >
+            Pulsa “Iniciar cuento” para comenzar la aventura 🌿
           </p>
         )}
 
-        {currentScene.choices.map((choice) => (
-          <button
-            key={choice.label}
-            onClick={() => guardarDecision(choice)}
-            disabled={!sessionId}
-            style={{ display: 'block', marginBottom: '1rem' }}
+        {sessionId && (
+          <section
+            style={{
+              marginTop: '1.5rem',
+              textAlign: 'center'
+            }}
           >
-            {choice.label}
-          </button>
-        ))}
+            <h2
+              style={{
+                color: '#1D3557',
+                fontSize: '1.8rem',
+                marginBottom: '0.8rem'
+              }}
+            >
+              {currentScene.title}
+            </h2>
 
-        {currentScene.isEnding && (
-          <button onClick={reiniciarRecorrido}>
-            Volver al inicio
-          </button>
+            <p
+              style={{
+                maxWidth: '760px',
+                margin: '0 auto 1.2rem auto',
+                color: '#1D3557',
+                fontSize: '1.12rem',
+                lineHeight: '1.7'
+              }}
+            >
+              {currentScene.text}
+            </p>
+
+            {currentScene.isEnding && (
+              <p
+                style={{
+                  maxWidth: '760px',
+                  margin: '0 auto 1.2rem auto',
+                  color: '#1D3557',
+                  fontSize: '1.12rem',
+                  lineHeight: '1.7'
+                }}
+              >
+                {obtenerTextoEpilogo()}
+              </p>
+            )}
+
+            {currentScene.choices.map((choice) => (
+              <button
+                key={choice.label}
+                onClick={() => guardarDecision(choice)}
+                disabled={!sessionId}
+                style={choiceButtonStyle}
+              >
+                {choice.label}
+              </button>
+            ))}
+
+            {currentScene.isEnding && (
+              <button onClick={reiniciarRecorrido} style={secondaryButtonStyle}>
+                Volver al inicio
+              </button>
+            )}
+          </section>
         )}
-      </section>
+      </div>
     </main>
   )
 }
