@@ -4,6 +4,11 @@ import { lunaBosque } from './data/stories/lunaBosque'
 import P5Scene from './components/P5Scene'
 
 function App() {
+  // Historia seleccionada actualmente.
+  // En esta PEC solo se implementa "Luna en el bosque", pero esta estructura
+  // permite sustituirla por otro cuento sin modificar el motor principal.
+  const selectedStory = lunaBosque
+
   // Usuario adulto autenticado mediante Supabase Auth.
   const [authUser, setAuthUser] = useState(null)
 
@@ -18,7 +23,7 @@ function App() {
   const [sessionId, setSessionId] = useState(null)
 
   // Escena activa del cuento.
-  const [scene, setScene] = useState('escena_1')
+  const [scene, setScene] = useState(selectedStory.initialScene)
 
   // Mensaje de estado mostrado en la interfaz.
   const [status, setStatus] = useState('Inicia sesión o regístrate para empezar.')
@@ -42,7 +47,7 @@ function App() {
   const claroEntradaPlayedRef = useRef(false)
 
   // Obtiene los datos de la escena activa.
-  const currentScene = lunaBosque[scene]
+  const currentScene = selectedStory.scenes[scene]
 
   // Recupera una sesión activa si el usuario ya había iniciado sesión.
   useEffect(() => {
@@ -97,9 +102,9 @@ function App() {
     }
   }, [])
 
-  // Actualiza el ambiente sonoro según la escena activa.
+  // Actualiza el ambiente sonoro según la configuración multimedia de cada escena.
   useEffect(() => {
-    if (!soundEnabled) return
+    if (!soundEnabled || !currentScene) return
 
     const bosqueAudio = bosqueAudioRef.current
     const aguaAudio = aguaAudioRef.current
@@ -113,57 +118,45 @@ function App() {
     calmaAudio.play().catch(() => {})
     silbidoVientoAudio.play().catch(() => {})
 
-    let bosqueVolume = 0.16
+    let bosqueVolume = 0
     let aguaVolume = 0
     let calmaVolume = 0
     let silbidoVientoVolume = 0
 
-    if (scene.startsWith('escena_2')) {
-      bosqueVolume = 0.08
-      aguaVolume = 0.22
-      calmaVolume = 0
-      silbidoVientoVolume = 0
+    const ambient = currentScene.audio?.ambient
+    const effect = currentScene.audio?.effect
+
+    if (ambient === 'bosque') {
+      bosqueVolume = 0.16
     }
 
-    if (scene.startsWith('escena_3')) {
+    if (ambient === 'agua') {
+      bosqueVolume = 0.08
+      aguaVolume = 0.22
+    }
+
+    if (ambient === 'calma') {
+      bosqueVolume = 0.06
+      calmaVolume = 0.18
+    }
+
+    if (effect === 'silbido_viento') {
       bosqueVolume = 0.1
-      aguaVolume = 0
       calmaVolume = 0.03
       silbidoVientoVolume = 0.2
     }
 
-    if (scene.startsWith('escena_4')) {
-      bosqueVolume = 0.14
-      aguaVolume = 0
-      calmaVolume = 0.04
-      silbidoVientoVolume = 0
-    }
-
-    if (scene.startsWith('escena_5')) {
-      bosqueVolume = 0.08
-      aguaVolume = 0
-      calmaVolume = 0.2
-      silbidoVientoVolume = 0
-
-      if (!claroEntradaPlayedRef.current && claroEntradaAudioRef.current) {
-        claroEntradaAudioRef.current.currentTime = 0
-        claroEntradaAudioRef.current.play().catch(() => {})
-        claroEntradaPlayedRef.current = true
-      }
-    }
-
-    if (scene === 'escena_6') {
-      bosqueVolume = 0.04
-      aguaVolume = 0
-      calmaVolume = 0.16
-      silbidoVientoVolume = 0
+    if (effect === 'claro_entrada' && !claroEntradaPlayedRef.current && claroEntradaAudioRef.current) {
+      claroEntradaAudioRef.current.currentTime = 0
+      claroEntradaAudioRef.current.play().catch(() => {})
+      claroEntradaPlayedRef.current = true
     }
 
     bosqueAudio.volume = bosqueVolume
     aguaAudio.volume = aguaVolume
     calmaAudio.volume = calmaVolume
     silbidoVientoAudio.volume = silbidoVientoVolume
-  }, [scene, soundEnabled])
+  }, [currentScene, soundEnabled])
 
   async function activarSonido() {
     setSoundEnabled(true)
@@ -267,7 +260,7 @@ function App() {
     setAuthUser(null)
     setSessions([])
     setSessionId(null)
-    setScene('escena_1')
+    setScene(selectedStory.initialScene)
     setHistory([])
     setCalmaScore(0)
     setImpulsoScore(0)
@@ -313,7 +306,7 @@ function App() {
       .insert([
         {
           user_id: authUser.id,
-          story_id: 'luna_bosque'
+          story_id: selectedStory.id
         }
       ])
       .select()
@@ -327,7 +320,7 @@ function App() {
 
     claroEntradaPlayedRef.current = false
     setSessionId(sessionData.id)
-    setScene('escena_1')
+    setScene(selectedStory.initialScene)
     setHistory([])
     setCalmaScore(0)
     setImpulsoScore(0)
@@ -336,40 +329,14 @@ function App() {
     await cargarSesionesUsuario(authUser.id)
   }
 
-  function calcularImpactoDecision(choiceLabel) {
-    let calma = 0
-    let impulso = 0
-
-    if (
-      choiceLabel.includes('Respira') ||
-      choiceLabel.includes('Ayuda') ||
-      choiceLabel.includes('escuchar con calma') ||
-      choiceLabel.includes('Observar') ||
-      choiceLabel.includes('Sentarse') ||
-      choiceLabel.includes('Abrazar')
-    ) {
-      calma = 1
-    }
-
-    if (
-      choiceLabel.includes('distrae') ||
-      choiceLabel.includes('Sigue a Mika') ||
-      choiceLabel.includes('Seguir el sonido') ||
-      choiceLabel.includes('Acercarse')
-    ) {
-      impulso = 1
-    }
-
-    return { calma, impulso }
-  }
-
   async function guardarDecision(choice) {
     if (!sessionId) {
       setStatus('Primero tienes que iniciar el cuento.')
       return
     }
 
-    const { calma, impulso } = calcularImpactoDecision(choice.label)
+    const calma = choice.impact?.calma || 0
+    const impulso = choice.impact?.impulso || 0
 
     const { error } = await supabase
       .from('scene_decisions')
@@ -409,7 +376,7 @@ function App() {
 
   function reiniciarRecorrido() {
     claroEntradaPlayedRef.current = false
-    setScene('escena_1')
+    setScene(selectedStory.initialScene)
     setHistory([])
     setCalmaScore(0)
     setImpulsoScore(0)
@@ -542,6 +509,7 @@ function App() {
                 <span><strong>Calma actual:</strong> {calmaScore}</span>
                 <span><strong>Impulso actual:</strong> {impulsoScore}</span>
                 <span><strong>Sonido:</strong> {soundEnabled ? 'activado' : 'desactivado'}</span>
+                <span><strong>Cuento:</strong> {selectedStory.title}</span>
                 <span>
                   <strong>Última sesión:</strong>{' '}
                   {ultimaSesion ? new Date(ultimaSesion.started_at).toLocaleString() : 'sin sesiones previas'}
