@@ -137,7 +137,7 @@ export const lunaBosque = {
         loops: [
           {
             key: 'agua',
-            volume: 0.22
+            volume: 0.08
           }
         ]
       },
