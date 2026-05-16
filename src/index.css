@@ -1,3 +1,5 @@
+/* Variables globales de color, tipografía y sombras.
+   Sirven para mantener una estética coherente en toda la app. */
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -11,6 +13,7 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* Tipografías base del proyecto. */
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -25,11 +28,13 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  /* En pantallas medianas o pequeñas reduzco el tamaño base del texto. */
   @media (max-width: 1024px) {
     font-size: 16px;
   }
 }
 
+/* Adaptación automática al modo oscuro del sistema. */
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
@@ -45,15 +50,18 @@
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
 
+  /* Ajuste visual para iconos en modo oscuro, si se usan botones sociales. */
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
 }
 
+/* Elimino el margen por defecto del navegador. */
 body {
   margin: 0;
 }
 
+/* Contenedor principal donde React monta la aplicación. */
 #root {
   width: 1126px;
   max-width: 100%;
@@ -66,6 +74,7 @@ body {
   box-sizing: border-box;
 }
 
+/* Estilo general de títulos. */
 h1,
 h2 {
   font-family: var(--heading);
@@ -73,28 +82,37 @@ h2 {
   color: var(--text-h);
 }
 
+/* Título principal. */
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
+
+  /* En pantallas pequeñas reduzco el título para que no ocupe demasiado. */
   @media (max-width: 1024px) {
     font-size: 36px;
     margin: 20px 0;
   }
 }
+
+/* Subtítulos. */
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
+
   @media (max-width: 1024px) {
     font-size: 20px;
   }
 }
+
+/* Quito márgenes por defecto de los párrafos para controlar mejor el diseño. */
 p {
   margin: 0;
 }
 
+/* Estilo para fragmentos de código o contadores, si aparecen en la interfaz. */
 code,
 .counter {
   font-family: var(--mono);

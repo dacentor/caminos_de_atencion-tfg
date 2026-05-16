@@ -1,17 +1,14 @@
-// Datos narrativos del cuento "Luna en el bosque".
-// La estructura sigue un modelo convergente:
-// cada decisión genera una variación del recorrido,
-// pero todas las rutas terminan confluyendo en un mismo epílogo.
-//
-// Este archivo contiene los datos propios del cuento:
-// textos, escenas, imágenes, sonidos, impactos narrativos y cierre dinámico.
-// Así App.jsx funciona como motor genérico y no como cuento concreto.
+// Datos del cuento "Luna en el bosque".
+// Aquí guardo la historia, las escenas, las imágenes, los sonidos y las decisiones.
+// La idea es que App.jsx funcione como motor general y este archivo sea solo el contenido del cuento.
 
 export const lunaBosque = {
   id: 'luna_bosque',
   title: 'Luna en el bosque',
   initialScene: 'escena_1',
 
+  // Sonidos que puede usar el cuento.
+  // Luego cada escena elige cuáles necesita y con qué volumen.
   audioAssets: {
     bosque: {
       path: '/audio/bosque.mp3',
@@ -35,6 +32,8 @@ export const lunaBosque = {
     }
   },
 
+  // El epílogo cambia según las decisiones del recorrido.
+  // Así no hay un único cierre fijo, sino una pequeña respuesta al camino elegido.
   getEndingText: ({ calmaScore, impulsoScore }) => {
     if (calmaScore > impulsoScore) {
       return 'Hoy Luna ha encontrado muchas formas de estar tranquila. A lo largo del camino ha descubierto que detenerse, observar y respirar también forman parte de la aventura.'
@@ -48,6 +47,7 @@ export const lunaBosque = {
   },
 
   scenes: {
+    // Primera escena: presenta el bosque y la primera elección de Luna.
     escena_1: {
       title: 'Comienzo del viaje',
       text: 'Luna inicia su camino con Kiro y Mika hacia el Bosque de las Mil Distracciones. Todo es color, movimiento y estímulos a su alrededor.',
@@ -79,6 +79,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Resultado si Luna se deja llevar por las mariposas.
     escena_1A: {
       title: 'Resultado del comienzo',
       text: 'Luna se deja llevar por las mariposas junto a Mika. Kiro la espera en el camino con paciencia.',
@@ -102,6 +103,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Resultado si Luna respira y continúa con más calma.
     escena_1B: {
       title: 'Resultado del comienzo',
       text: 'Luna respira hondo y decide seguir el camino con Kiro. Mika los acompaña desde el aire.',
@@ -125,6 +127,8 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Escena del río y el puente de ramas.
+    // El sonido de agua está más bajo para que acompañe sin molestar.
     escena_2: {
       title: 'El puente de ramas',
       text: 'Llegan a un río que corta el paso. Kiro empieza a construir un puente mientras Mika llama a Luna hacia algo brillante.',
@@ -132,12 +136,12 @@ export const lunaBosque = {
       audio: {
         ambient: {
           key: 'bosque',
-          volume: 0.08
+          volume: 0.06
         },
         loops: [
           {
             key: 'agua',
-            volume: 0.08
+            volume: 0.11
           }
         ]
       },
@@ -162,6 +166,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna explora con Mika, pero después vuelve al camino principal.
     escena_2A: {
       title: 'Resultado del puente',
       text: 'Luna sigue a Mika durante un momento, descubre la belleza del bosque y después regresa para cruzar el puente.',
@@ -169,12 +174,12 @@ export const lunaBosque = {
       audio: {
         ambient: {
           key: 'bosque',
-          volume: 0.08
+          volume: 0.06
         },
         loops: [
           {
             key: 'agua',
-            volume: 0.22
+            volume: 0.11
           }
         ]
       },
@@ -191,6 +196,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna ayuda a Kiro y cruza el puente de forma más calmada.
     escena_2B: {
       title: 'Resultado del puente',
       text: 'Luna ayuda a Kiro. Juntos terminan el puente y cruzan con calma al otro lado.',
@@ -198,12 +204,12 @@ export const lunaBosque = {
       audio: {
         ambient: {
           key: 'bosque',
-          volume: 0.08
+          volume: 0.06
         },
         loops: [
           {
             key: 'agua',
-            volume: 0.22
+            volume: 0.11
           }
         ]
       },
@@ -220,6 +226,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Escena del silbido: introduce un estímulo auditivo que puede distraer a Luna.
     escena_3: {
       title: 'El sendero del silbido',
       text: 'Después del río, el bosque se vuelve más tranquilo. De pronto, Luna oye un silbido extraño que aparece y desaparece entre el viento.',
@@ -261,6 +268,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna sigue el sonido y descubre de dónde viene.
     escena_3A: {
       title: 'Resultado del sendero del silbido',
       text: 'Luna sigue el sonido y descubre que viene del viento al pasar por una roca hueca. Mika revolotea a su alrededor mientras Kiro la alcanza poco después.',
@@ -294,6 +302,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna se detiene y escucha antes de actuar.
     escena_3B: {
       title: 'Resultado del sendero del silbido',
       text: 'Luna se detiene, respira y escucha con atención. Poco a poco comprende que el silbido cambia con el viento y descubre de dónde viene sin necesidad de correr tras él.',
@@ -327,6 +336,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Escena del brillo: trabaja la atención visual y la observación.
     escena_4: {
       title: 'El brillo entre las ramas',
       text: 'Un poco más adelante, Luna ve un destello suave entre unas ramas bajas. Al mirar mejor, descubre varias telas finas que reflejan la luz como si fueran hilos de cristal.',
@@ -364,6 +374,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna se acerca al brillo para explorarlo mejor.
     escena_4A: {
       title: 'Resultado del brillo entre las ramas',
       text: 'Luna se acerca despacio y descubre pequeños detalles en las telas brillantes. La luz cambia sobre los hilos y todo parece moverse con suavidad.',
@@ -393,6 +404,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna observa desde lejos y decide continuar.
     escena_4B: {
       title: 'Resultado del brillo entre las ramas',
       text: 'Luna se queda un momento observando desde donde está. Nota cómo la luz cambia sobre las telas y siente que no hace falta acercarse más para disfrutar del instante.',
@@ -422,6 +434,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Escena del claro: punto final de calma antes del epílogo.
     escena_5: {
       title: 'El claro de la calma',
       text: 'En el claro aparece la Flor de la Calma, brillando suavemente frente a Luna, Kiro y Mika.',
@@ -463,6 +476,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna conecta con la calma abrazando la flor.
     escena_5A: {
       title: 'Resultado del claro',
       text: 'Luna abraza la flor luminosa. Siente la calma muy cerca, como un calor suave en el pecho.',
@@ -492,6 +506,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Luna conecta con la calma observando en silencio.
     escena_5B: {
       title: 'Resultado del claro',
       text: 'Luna se sienta junto a Kiro y Mika. Observan la flor brillar en silencio.',
@@ -521,6 +536,7 @@ export const lunaBosque = {
       isEnding: false
     },
 
+    // Escena final. El texto adicional del epílogo se calcula según el recorrido.
     escena_6: {
       title: 'Epílogo',
       text: 'Luna regresa con Kiro y Mika. El bosque guarda el recuerdo de sus elecciones.',

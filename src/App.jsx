@@ -4,52 +4,43 @@ import { lunaBosque } from './data/stories/lunaBosque'
 import P5Scene from './components/P5Scene'
 
 function App() {
-  // Historia activa. Ahora solo tenemos Luna, pero esto deja la puerta abierta a más cuentos.
+  // Historia activa. Ahora solo hay un cuento, pero queda preparado para añadir más.
   const selectedStory = lunaBosque
 
-  // Detectamos tamaño de pantalla para ajustar la interfaz sin romper tablets, móviles o proyector.
+  // Detecta si estamos en móvil/tablet para adaptar tamaños y distribución.
   const [isCompact, setIsCompact] = useState(window.innerWidth < 768)
 
-  // Usuario adulto autenticado con Supabase Auth.
+  // Datos del adulto autenticado con Supabase.
   const [authUser, setAuthUser] = useState(null)
-
-  // Campos del formulario de acceso.
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  // Sesiones guardadas del adulto.
+  // Datos guardados para el panel adulto.
   const [sessions, setSessions] = useState([])
-
-  // Decisiones guardadas en Supabase para esas sesiones.
   const [adultDecisions, setAdultDecisions] = useState([])
 
-  // Sesión narrativa actual.
+  // Estado del cuento actual.
   const [sessionId, setSessionId] = useState(null)
-
-  // Escena actual del cuento.
   const [scene, setScene] = useState(selectedStory.initialScene)
-
-  // Mensaje de estado para saber qué está pasando.
   const [status, setStatus] = useState('Inicia sesión o regístrate para empezar.')
-
-  // Historial local para el botón Atrás.
   const [history, setHistory] = useState([])
 
-  // Scores del recorrido actual.
+  // Puntuaciones del recorrido. Sirven para el epílogo y para el panel adulto.
   const [calmaScore, setCalmaScore] = useState(0)
   const [impulsoScore, setImpulsoScore] = useState(0)
 
   // Control del sonido.
   const [soundEnabled, setSoundEnabled] = useState(false)
 
-  // Audios cargados dinámicamente desde la configuración del cuento.
+  // Referencias de audio. Uso useRef porque no necesito redibujar la interfaz al cambiar el volumen.
   const audioRefs = useRef({})
+  const audioFadeIntervalsRef = useRef({})
   const playedOneShotsRef = useRef({})
 
-  // Escena activa leída desde el archivo de datos del cuento.
+  // Escena actual leída desde el archivo de datos del cuento.
   const currentScene = selectedStory.scenes[scene]
 
-  // Escuchamos cambios de tamaño para que la interfaz se adapte si giran tablet/móvil.
+  // Ajuste responsive cuando cambia el tamaño de la pantalla.
   useEffect(() => {
     function handleResize() {
       setIsCompact(window.innerWidth < 768)
@@ -62,7 +53,7 @@ function App() {
     }
   }, [])
 
-  // Recuperamos usuario si ya había sesión iniciada.
+  // Recupera una sesión adulta si el usuario ya estaba logueado.
   useEffect(() => {
     async function obtenerSesionActual() {
       const { data } = await supabase.auth.getUser()
@@ -77,7 +68,8 @@ function App() {
     obtenerSesionActual()
   }, [])
 
-  // Preparamos los audios que declara la historia.
+  // Carga los sonidos definidos en el cuento.
+  // Así App.jsx no necesita saber nombres concretos de archivos de audio.
   useEffect(() => {
     const audioEntries = Object.entries(selectedStory.audioAssets || {})
 
@@ -89,24 +81,58 @@ function App() {
     })
 
     return () => {
+      Object.values(audioFadeIntervalsRef.current).forEach((intervalId) => {
+        clearInterval(intervalId)
+      })
+
       Object.values(audioRefs.current).forEach((audio) => {
         audio.pause()
         audio.currentTime = 0
       })
 
       audioRefs.current = {}
+      audioFadeIntervalsRef.current = {}
       playedOneShotsRef.current = {}
     }
   }, [selectedStory])
 
-  // Cambiamos el sonido según lo que diga cada escena.
+  // Cambia el volumen poco a poco para que el paso entre escenas no sea brusco.
+  function ajustarVolumenSuave(audioKey, targetVolume) {
+    const audio = audioRefs.current[audioKey]
+    if (!audio) return
+
+    if (audioFadeIntervalsRef.current[audioKey]) {
+      clearInterval(audioFadeIntervalsRef.current[audioKey])
+    }
+
+    const startVolume = audio.volume
+    const safeTargetVolume = Math.max(0, Math.min(1, targetVolume))
+    const steps = 18
+    let currentStep = 0
+
+    audioFadeIntervalsRef.current[audioKey] = setInterval(() => {
+      currentStep += 1
+
+      const progress = currentStep / steps
+      audio.volume = startVolume + (safeTargetVolume - startVolume) * progress
+
+      if (currentStep >= steps) {
+        audio.volume = safeTargetVolume
+        clearInterval(audioFadeIntervalsRef.current[audioKey])
+        delete audioFadeIntervalsRef.current[audioKey]
+      }
+    }, 45)
+  }
+
+  // Ajusta el sonido según la escena actual.
+  // Primero baja todos los loops y luego sube solo los que esa escena necesita.
   useEffect(() => {
     if (!soundEnabled || !currentScene) return
 
-    Object.values(audioRefs.current).forEach((audio) => {
+    Object.entries(audioRefs.current).forEach(([audioKey, audio]) => {
       if (audio.loop) {
         audio.play().catch(() => {})
-        audio.volume = 0
+        ajustarVolumenSuave(audioKey, 0)
       }
     })
 
@@ -114,18 +140,15 @@ function App() {
     const loops = currentScene.audio?.loops || []
     const oneShot = currentScene.audio?.oneShot
 
-    if (ambient?.key && audioRefs.current[ambient.key]) {
-      audioRefs.current[ambient.key].volume = ambient.volume || 0
+    if (ambient?.key) {
+      ajustarVolumenSuave(ambient.key, ambient.volume || 0)
     }
 
     loops.forEach((loopConfig) => {
-      const audio = audioRefs.current[loopConfig.key]
-
-      if (audio) {
-        audio.volume = loopConfig.volume || 0
-      }
+      ajustarVolumenSuave(loopConfig.key, loopConfig.volume || 0)
     })
 
+    // Los oneShot son efectos puntuales. Se reproducen una vez por escena.
     if (oneShot?.key && audioRefs.current[oneShot.key]) {
       const oneShotId = `${scene}_${oneShot.key}`
 
@@ -154,6 +177,12 @@ function App() {
     setSoundEnabled(false)
     setStatus('Sonido desactivado.')
 
+    Object.values(audioFadeIntervalsRef.current).forEach((intervalId) => {
+      clearInterval(intervalId)
+    })
+
+    audioFadeIntervalsRef.current = {}
+
     Object.values(audioRefs.current).forEach((audio) => {
       audio.pause()
       audio.currentTime = 0
@@ -161,7 +190,7 @@ function App() {
     })
   }
 
-  // Cargamos sesiones y decisiones para montar el panel adulto.
+  // Carga las sesiones y decisiones del adulto para mostrar el dashboard.
   async function cargarSesionesUsuario(userId) {
     if (!userId) return
 
@@ -202,10 +231,7 @@ function App() {
   }
 
   async function registrarse() {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password
-    })
+    const { data, error } = await supabase.auth.signUp({ email, password })
 
     if (error) {
       console.error(error)
@@ -222,10 +248,7 @@ function App() {
   }
 
   async function iniciarSesion() {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       console.error(error)
@@ -257,6 +280,8 @@ function App() {
     setStatus('Sesión cerrada.')
   }
 
+  // Asegura que también exista un perfil en la tabla users.
+  // Supabase Auth gestiona el acceso, pero esta tabla sirve para relacionar datos del proyecto.
   async function asegurarPerfilPublico(user) {
     const { error } = await supabase
       .from('users')
@@ -276,6 +301,7 @@ function App() {
     return true
   }
 
+  // Crea una sesión nueva de cuento. A partir de aquí ya se guardan decisiones.
   async function iniciarCuento() {
     if (!authUser) {
       setStatus('Primero debes iniciar sesión con una cuenta adulta.')
@@ -285,7 +311,6 @@ function App() {
     setStatus('Preparando perfil...')
 
     const perfilCorrecto = await asegurarPerfilPublico(authUser)
-
     if (!perfilCorrecto) return
 
     setStatus('Creando sesión del cuento...')
@@ -318,6 +343,7 @@ function App() {
     await cargarSesionesUsuario(authUser.id)
   }
 
+  // Guarda la decisión tomada, actualiza puntuaciones y avanza a la siguiente escena.
   async function guardarDecision(choice) {
     if (!sessionId) {
       setStatus('Primero tienes que iniciar el cuento.')
@@ -354,6 +380,7 @@ function App() {
     }
   }
 
+  // Permite volver una escena atrás dentro del recorrido actual.
   function volverAtras() {
     if (history.length === 0) {
       setStatus('No hay escenas anteriores en el recorrido actual.')
@@ -361,7 +388,6 @@ function App() {
     }
 
     const previousScene = history[history.length - 1]
-
     setScene(previousScene)
     setHistory((prevHistory) => prevHistory.slice(0, -1))
     setStatus('Has vuelto a la escena anterior.')
@@ -376,13 +402,11 @@ function App() {
     setStatus('Recorrido reiniciado.')
   }
 
-  // Calculamos estadísticas adultas leyendo los impactos definidos en el cuento.
+  // Busca el impacto de una decisión ya guardada.
+  // Esto permite calcular estadísticas adultas aunque solo guardemos el texto de la decisión.
   function obtenerImpactoDecisionGuardada(decision) {
     const escenaGuardada = selectedStory.scenes[decision.scene_id]
-
-    if (!escenaGuardada) {
-      return { calma: 0, impulso: 0 }
-    }
+    if (!escenaGuardada) return { calma: 0, impulso: 0 }
 
     const decisionEncontrada = escenaGuardada.choices.find(
       (choice) => choice.label === decision.decision_taken
@@ -391,6 +415,7 @@ function App() {
     return decisionEncontrada?.impact || { calma: 0, impulso: 0 }
   }
 
+  // Calcula la suma global de calma e impulso para el panel adulto.
   const adultStats = adultDecisions.reduce(
     (stats, decision) => {
       const impact = obtenerImpactoDecisionGuardada(decision)
@@ -404,10 +429,8 @@ function App() {
   )
 
   const totalAdultImpact = adultStats.calma + adultStats.impulso
-
   const adultCalmaPercent =
     totalAdultImpact > 0 ? Math.round((adultStats.calma / totalAdultImpact) * 100) : 0
-
   const adultImpulsoPercent =
     totalAdultImpact > 0 ? Math.round((adultStats.impulso / totalAdultImpact) * 100) : 0
 
@@ -418,14 +441,11 @@ function App() {
         ? 'Predominio de decisiones exploratorias'
         : 'Equilibrio entre calma y exploración'
 
-  const endingText = selectedStory.getEndingText({
-    calmaScore,
-    impulsoScore
-  })
-
+  const endingText = selectedStory.getEndingText({ calmaScore, impulsoScore })
   const ultimaSesion = sessions[0]
   const ultimasSesiones = sessions.slice(0, 5)
 
+  // Estilos principales. Están aquí para mantener el prototipo en un solo archivo visual.
   const primaryButtonStyle = {
     margin: '0.5rem',
     padding: '0.85rem 1.15rem',
@@ -439,27 +459,15 @@ function App() {
   }
 
   const secondaryButtonStyle = {
-    margin: '0.5rem',
-    padding: '0.85rem 1.15rem',
-    borderRadius: '12px',
+    ...primaryButtonStyle,
     backgroundColor: '#A8DADC',
-    color: '#1D3557',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: isCompact ? '0.95rem' : '1rem',
-    touchAction: 'manipulation'
+    color: '#1D3557'
   }
 
   const neutralButtonStyle = {
-    margin: '0.5rem',
-    padding: '0.85rem 1.15rem',
-    borderRadius: '12px',
+    ...primaryButtonStyle,
     backgroundColor: '#F6C977',
-    color: '#1D3557',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: isCompact ? '0.95rem' : '1rem',
-    touchAction: 'manipulation'
+    color: '#1D3557'
   }
 
   const choiceButtonStyle = {
@@ -498,11 +506,12 @@ function App() {
   }
 
   const statCardStyle = {
-    padding: '0.9rem',
-    borderRadius: '14px',
+    padding: '1rem',
+    borderRadius: '16px',
     backgroundColor: 'white',
     border: '1px solid #A8DADC',
-    overflowWrap: 'anywhere'
+    overflowWrap: 'anywhere',
+    boxShadow: '0 6px 18px rgba(29, 53, 87, 0.08)'
   }
 
   const barOuterStyle = {
@@ -572,6 +581,7 @@ function App() {
     gap: '0.8rem'
   }
 
+  // Seguridad básica por si una escena no existe o se escribe mal su id.
   if (!currentScene) {
     return (
       <main style={mainStyle}>
@@ -588,16 +598,20 @@ function App() {
     <main style={mainStyle}>
       <div style={appContainerStyle}>
         <header style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <h1 style={titleStyle}>
-            Caminos de Atención
-          </h1>
-          <p style={{ margin: 0, color: '#457B9D', fontSize: isCompact ? '0.95rem' : '1rem' }}>{status}</p>
+          <h1 style={titleStyle}>Caminos de Atención</h1>
+          <p style={{ margin: 0, color: '#457B9D', fontSize: isCompact ? '0.95rem' : '1rem' }}>
+            {status}
+          </p>
         </header>
 
         {!authUser && (
           <section style={formSectionStyle}>
-            <h2 style={{ color: '#1D3557', marginTop: 0, fontSize: isCompact ? '1.25rem' : '1.5rem' }}>Acceso adulto</h2>
-            <p style={{ color: '#457B9D', lineHeight: '1.5' }}>Inicia sesión para guardar el recorrido del cuento.</p>
+            <h2 style={{ color: '#1D3557', marginTop: 0, fontSize: isCompact ? '1.25rem' : '1.5rem' }}>
+              Acceso adulto
+            </h2>
+            <p style={{ color: '#457B9D', lineHeight: '1.5' }}>
+              Inicia sesión para guardar el recorrido del cuento.
+            </p>
 
             <input type="email" placeholder="Email del adulto" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
             <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
@@ -611,38 +625,23 @@ function App() {
 
         {authUser && (
           <>
-            <details style={{ marginBottom: '1rem', padding: '1rem', borderRadius: '16px', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC' }}>
+            <details style={{ marginBottom: '1rem', padding: '1rem', borderRadius: '18px', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC' }}>
               <summary style={{ cursor: 'pointer', color: '#1D3557', fontWeight: 'bold' }}>
                 Panel adulto
               </summary>
 
               <div style={{ marginTop: '1rem', color: '#1D3557' }}>
                 <div style={gridStyle}>
-                  <div style={statCardStyle}>
-                    <strong>Cuenta</strong>
-                    <p style={{ margin: '0.4rem 0 0 0' }}>{authUser.email}</p>
-                  </div>
-
-                  <div style={statCardStyle}>
-                    <strong>Sesiones guardadas</strong>
-                    <p style={{ margin: '0.4rem 0 0 0' }}>{sessions.length}</p>
-                  </div>
-
-                  <div style={statCardStyle}>
-                    <strong>Decisiones registradas</strong>
-                    <p style={{ margin: '0.4rem 0 0 0' }}>{adultDecisions.length}</p>
-                  </div>
-
-                  <div style={statCardStyle}>
-                    <strong>Sesión actual</strong>
-                    <p style={{ margin: '0.4rem 0 0 0' }}>{sessionId || 'todavía no creada'}</p>
-                  </div>
+                  <div style={statCardStyle}><strong>Cuenta</strong><p>{authUser.email}</p></div>
+                  <div style={statCardStyle}><strong>Sesiones guardadas</strong><p>{sessions.length}</p></div>
+                  <div style={statCardStyle}><strong>Decisiones registradas</strong><p>{adultDecisions.length}</p></div>
+                  <div style={statCardStyle}><strong>Sesión actual</strong><p>{sessionId || 'todavía no creada'}</p></div>
                 </div>
 
                 <div style={scoreGridStyle}>
                   <div style={statCardStyle}>
                     <strong>Calma acumulada</strong>
-                    <p style={{ margin: '0.4rem 0 0 0' }}>{adultStats.calma}</p>
+                    <p>{adultStats.calma}</p>
                     <div style={barOuterStyle}>
                       <div style={{ width: `${adultCalmaPercent}%`, height: '100%', backgroundColor: '#A8DADC' }} />
                     </div>
@@ -651,7 +650,7 @@ function App() {
 
                   <div style={statCardStyle}>
                     <strong>Impulso acumulado</strong>
-                    <p style={{ margin: '0.4rem 0 0 0' }}>{adultStats.impulso}</p>
+                    <p>{adultStats.impulso}</p>
                     <div style={barOuterStyle}>
                       <div style={{ width: `${adultImpulsoPercent}%`, height: '100%', backgroundColor: '#F6C977' }} />
                     </div>
@@ -659,29 +658,24 @@ function App() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1rem', padding: '0.9rem', borderRadius: '14px', backgroundColor: 'white', border: '1px solid #A8DADC' }}>
-                  <strong>Tendencia general:</strong>
-                  <p style={{ margin: '0.4rem 0 0 0' }}>{tendenciaAdulto}</p>
+                <div style={{ ...statCardStyle, marginTop: '1rem' }}>
+                  <strong>Tendencia general</strong>
+                  <p>{tendenciaAdulto}</p>
                 </div>
 
-                <div style={{ marginTop: '1rem', padding: '0.9rem', borderRadius: '14px', backgroundColor: 'white', border: '1px solid #A8DADC' }}>
-                  <strong>Última sesión:</strong>
-                  <p style={{ margin: '0.4rem 0 0 0' }}>
-                    {ultimaSesion ? new Date(ultimaSesion.started_at).toLocaleString() : 'sin sesiones previas'}
-                  </p>
+                <div style={{ ...statCardStyle, marginTop: '1rem' }}>
+                  <strong>Última sesión</strong>
+                  <p>{ultimaSesion ? new Date(ultimaSesion.started_at).toLocaleString() : 'sin sesiones previas'}</p>
                 </div>
 
-                <div style={{ marginTop: '1rem', padding: '0.9rem', borderRadius: '14px', backgroundColor: 'white', border: '1px solid #A8DADC' }}>
+                <div style={{ ...statCardStyle, marginTop: '1rem' }}>
                   <strong>Últimas sesiones</strong>
-
                   {ultimasSesiones.length === 0 ? (
-                    <p style={{ margin: '0.4rem 0 0 0' }}>Todavía no hay sesiones guardadas.</p>
+                    <p>Todavía no hay sesiones guardadas.</p>
                   ) : (
                     <ul style={{ marginBottom: 0, paddingLeft: '1.2rem' }}>
                       {ultimasSesiones.map((session) => (
-                        <li key={session.id}>
-                          {session.story_id} — {new Date(session.started_at).toLocaleString()}
-                        </li>
+                        <li key={session.id}>{session.story_id} — {new Date(session.started_at).toLocaleString()}</li>
                       ))}
                     </ul>
                   )}
@@ -695,17 +689,12 @@ function App() {
 
             <section style={{ textAlign: 'center', marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.25rem' }}>
               <button onClick={iniciarCuento} style={secondaryButtonStyle}>Iniciar cuento</button>
-
-              <button onClick={volverAtras} disabled={history.length === 0} style={history.length === 0 ? disabledButtonStyle : neutralButtonStyle}>
-                Atrás
-              </button>
-
+              <button onClick={volverAtras} disabled={history.length === 0} style={history.length === 0 ? disabledButtonStyle : neutralButtonStyle}>Atrás</button>
               {!soundEnabled ? (
                 <button onClick={activarSonido} style={neutralButtonStyle}>Activar sonido</button>
               ) : (
                 <button onClick={desactivarSonido} style={neutralButtonStyle}>Desactivar sonido</button>
               )}
-
               <button onClick={cerrarSesion} style={primaryButtonStyle}>Cerrar sesión</button>
             </section>
           </>
@@ -717,16 +706,13 @@ function App() {
           <P5Scene scene={scene} image={currentScene.image} />
         </section>
 
+        {/* Vista previa antes de iniciar una sesión narrativa. */}
         {!sessionId && (
           <section style={{ marginTop: '1.5rem', textAlign: 'center' }}>
             <h2 style={{ color: '#1D3557', fontSize: isCompact ? '1.45rem' : '1.8rem', marginBottom: '0.8rem' }}>
               {currentScene.title}
             </h2>
-
-            <p style={textStyle}>
-              {currentScene.text}
-            </p>
-
+            <p style={textStyle}>{currentScene.text}</p>
             <p style={{ color: '#457B9D', fontStyle: 'italic', lineHeight: '1.5' }}>
               {authUser
                 ? 'Pulsa “Iniciar cuento” para guardar el recorrido y comenzar la aventura.'
@@ -735,21 +721,15 @@ function App() {
           </section>
         )}
 
+        {/* Cuento activo: se muestran texto, epílogo si toca y botones de decisión. */}
         {sessionId && (
           <section style={{ marginTop: '1.5rem', textAlign: 'center' }}>
             <h2 style={{ color: '#1D3557', fontSize: isCompact ? '1.45rem' : '1.8rem', marginBottom: '0.8rem' }}>
               {currentScene.title}
             </h2>
+            <p style={textStyle}>{currentScene.text}</p>
 
-            <p style={textStyle}>
-              {currentScene.text}
-            </p>
-
-            {currentScene.isEnding && (
-              <p style={textStyle}>
-                {endingText}
-              </p>
-            )}
+            {currentScene.isEnding && <p style={textStyle}>{endingText}</p>}
 
             {currentScene.choices.map((choice) => (
               <button key={choice.label} onClick={() => guardarDecision(choice)} disabled={!sessionId} style={choiceButtonStyle}>
