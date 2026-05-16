@@ -3,13 +3,49 @@
 // cada decisión genera una variación del recorrido,
 // pero todas las rutas terminan confluyendo en un mismo epílogo.
 //
-// La historia se define como un objeto autónomo para facilitar
-// la incorporación futura de nuevos cuentos a la plataforma.
+// Este archivo contiene los datos propios del cuento:
+// textos, escenas, imágenes, sonidos, impactos narrativos y cierre dinámico.
+// Así App.jsx funciona como motor genérico y no como cuento concreto.
 
 export const lunaBosque = {
   id: 'luna_bosque',
   title: 'Luna en el bosque',
   initialScene: 'escena_1',
+
+  audioAssets: {
+    bosque: {
+      path: '/audio/bosque.mp3',
+      loop: true
+    },
+    agua: {
+      path: '/audio/agua.mp3',
+      loop: true
+    },
+    calma: {
+      path: '/audio/calma.mp3',
+      loop: true
+    },
+    silbido_viento: {
+      path: '/audio/silbido_viento.mp3',
+      loop: true
+    },
+    claro_entrada: {
+      path: '/audio/claro_entrada.mp3',
+      loop: false
+    }
+  },
+
+  getEndingText: ({ calmaScore, impulsoScore }) => {
+    if (calmaScore > impulsoScore) {
+      return 'Hoy Luna ha encontrado muchas formas de estar tranquila. A lo largo del camino ha descubierto que detenerse, observar y respirar también forman parte de la aventura.'
+    }
+
+    if (impulsoScore > calmaScore) {
+      return 'Hoy Luna ha seguido con curiosidad muchos estímulos del bosque. En su recorrido ha descubierto que explorar también puede enseñarle a escucharse y encontrar la calma.'
+    }
+
+    return 'Hoy Luna ha combinado curiosidad y calma durante el viaje. El bosque le ha mostrado que existen muchas formas de avanzar y que cada recorrido puede enseñarle algo distinto.'
+  },
 
   scenes: {
     escena_1: {
@@ -17,7 +53,10 @@ export const lunaBosque = {
       text: 'Luna inicia su camino con Kiro y Mika hacia el Bosque de las Mil Distracciones. Todo es color, movimiento y estímulos a su alrededor.',
       image: '/assets/portada.png',
       audio: {
-        ambient: 'bosque'
+        ambient: {
+          key: 'bosque',
+          volume: 0.16
+        }
       },
       choices: [
         {
@@ -45,7 +84,10 @@ export const lunaBosque = {
       text: 'Luna se deja llevar por las mariposas junto a Mika. Kiro la espera en el camino con paciencia.',
       image: '/assets/escena1A.png',
       audio: {
-        ambient: 'bosque'
+        ambient: {
+          key: 'bosque',
+          volume: 0.16
+        }
       },
       choices: [
         {
@@ -65,7 +107,10 @@ export const lunaBosque = {
       text: 'Luna respira hondo y decide seguir el camino con Kiro. Mika los acompaña desde el aire.',
       image: '/assets/escena1B.png',
       audio: {
-        ambient: 'bosque'
+        ambient: {
+          key: 'bosque',
+          volume: 0.16
+        }
       },
       choices: [
         {
@@ -85,7 +130,16 @@ export const lunaBosque = {
       text: 'Llegan a un río que corta el paso. Kiro empieza a construir un puente mientras Mika llama a Luna hacia algo brillante.',
       image: '/assets/rio.png',
       audio: {
-        ambient: 'agua'
+        ambient: {
+          key: 'bosque',
+          volume: 0.08
+        },
+        loops: [
+          {
+            key: 'agua',
+            volume: 0.22
+          }
+        ]
       },
       choices: [
         {
@@ -113,7 +167,16 @@ export const lunaBosque = {
       text: 'Luna sigue a Mika durante un momento, descubre la belleza del bosque y después regresa para cruzar el puente.',
       image: '/assets/rioA.png',
       audio: {
-        ambient: 'agua'
+        ambient: {
+          key: 'bosque',
+          volume: 0.08
+        },
+        loops: [
+          {
+            key: 'agua',
+            volume: 0.22
+          }
+        ]
       },
       choices: [
         {
@@ -133,7 +196,16 @@ export const lunaBosque = {
       text: 'Luna ayuda a Kiro. Juntos terminan el puente y cruzan con calma al otro lado.',
       image: '/assets/rioB.png',
       audio: {
-        ambient: 'agua'
+        ambient: {
+          key: 'bosque',
+          volume: 0.08
+        },
+        loops: [
+          {
+            key: 'agua',
+            volume: 0.22
+          }
+        ]
       },
       choices: [
         {
@@ -153,8 +225,20 @@ export const lunaBosque = {
       text: 'Después del río, el bosque se vuelve más tranquilo. De pronto, Luna oye un silbido extraño que aparece y desaparece entre el viento.',
       image: '/assets/sendero.png',
       audio: {
-        ambient: 'bosque',
-        effect: 'silbido_viento'
+        ambient: {
+          key: 'bosque',
+          volume: 0.1
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.03
+          },
+          {
+            key: 'silbido_viento',
+            volume: 0.2
+          }
+        ]
       },
       choices: [
         {
@@ -182,8 +266,20 @@ export const lunaBosque = {
       text: 'Luna sigue el sonido y descubre que viene del viento al pasar por una roca hueca. Mika revolotea a su alrededor mientras Kiro la alcanza poco después.',
       image: '/assets/senderoA.png',
       audio: {
-        ambient: 'bosque',
-        effect: 'silbido_viento'
+        ambient: {
+          key: 'bosque',
+          volume: 0.1
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.03
+          },
+          {
+            key: 'silbido_viento',
+            volume: 0.2
+          }
+        ]
       },
       choices: [
         {
@@ -203,8 +299,20 @@ export const lunaBosque = {
       text: 'Luna se detiene, respira y escucha con atención. Poco a poco comprende que el silbido cambia con el viento y descubre de dónde viene sin necesidad de correr tras él.',
       image: '/assets/senderoB.png',
       audio: {
-        ambient: 'bosque',
-        effect: 'silbido_viento'
+        ambient: {
+          key: 'bosque',
+          volume: 0.1
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.03
+          },
+          {
+            key: 'silbido_viento',
+            volume: 0.2
+          }
+        ]
       },
       choices: [
         {
@@ -224,7 +332,16 @@ export const lunaBosque = {
       text: 'Un poco más adelante, Luna ve un destello suave entre unas ramas bajas. Al mirar mejor, descubre varias telas finas que reflejan la luz como si fueran hilos de cristal.',
       image: '/assets/brillo.png',
       audio: {
-        ambient: 'bosque'
+        ambient: {
+          key: 'bosque',
+          volume: 0.14
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.04
+          }
+        ]
       },
       choices: [
         {
@@ -252,7 +369,16 @@ export const lunaBosque = {
       text: 'Luna se acerca despacio y descubre pequeños detalles en las telas brillantes. La luz cambia sobre los hilos y todo parece moverse con suavidad.',
       image: '/assets/brilloA.png',
       audio: {
-        ambient: 'bosque'
+        ambient: {
+          key: 'bosque',
+          volume: 0.14
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.04
+          }
+        ]
       },
       choices: [
         {
@@ -272,7 +398,16 @@ export const lunaBosque = {
       text: 'Luna se queda un momento observando desde donde está. Nota cómo la luz cambia sobre las telas y siente que no hace falta acercarse más para disfrutar del instante.',
       image: '/assets/brilloB.png',
       audio: {
-        ambient: 'bosque'
+        ambient: {
+          key: 'bosque',
+          volume: 0.14
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.04
+          }
+        ]
       },
       choices: [
         {
@@ -292,8 +427,20 @@ export const lunaBosque = {
       text: 'En el claro aparece la Flor de la Calma, brillando suavemente frente a Luna, Kiro y Mika.',
       image: '/assets/claro.png',
       audio: {
-        ambient: 'calma',
-        effect: 'claro_entrada'
+        ambient: {
+          key: 'bosque',
+          volume: 0.06
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.18
+          }
+        ],
+        oneShot: {
+          key: 'claro_entrada',
+          volume: 0.28
+        }
       },
       choices: [
         {
@@ -321,7 +468,16 @@ export const lunaBosque = {
       text: 'Luna abraza la flor luminosa. Siente la calma muy cerca, como un calor suave en el pecho.',
       image: '/assets/florA.png',
       audio: {
-        ambient: 'calma'
+        ambient: {
+          key: 'bosque',
+          volume: 0.06
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.18
+          }
+        ]
       },
       choices: [
         {
@@ -341,7 +497,16 @@ export const lunaBosque = {
       text: 'Luna se sienta junto a Kiro y Mika. Observan la flor brillar en silencio.',
       image: '/assets/FlorB.png',
       audio: {
-        ambient: 'calma'
+        ambient: {
+          key: 'bosque',
+          volume: 0.06
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.18
+          }
+        ]
       },
       choices: [
         {
@@ -361,7 +526,16 @@ export const lunaBosque = {
       text: 'Luna regresa con Kiro y Mika. El bosque guarda el recuerdo de sus elecciones.',
       image: '/assets/epilogo.png',
       audio: {
-        ambient: 'calma'
+        ambient: {
+          key: 'bosque',
+          volume: 0.04
+        },
+        loops: [
+          {
+            key: 'calma',
+            volume: 0.16
+          }
+        ]
       },
       choices: [],
       isEnding: true
