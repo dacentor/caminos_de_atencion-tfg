@@ -7,6 +7,9 @@ function App() {
   // Historia activa. Ahora solo tenemos Luna, pero esto deja la puerta abierta a más cuentos.
   const selectedStory = lunaBosque
 
+  // Detectamos tamaño de pantalla para ajustar la interfaz sin romper tablets, móviles o proyector.
+  const [isCompact, setIsCompact] = useState(window.innerWidth < 768)
+
   // Usuario adulto autenticado con Supabase Auth.
   const [authUser, setAuthUser] = useState(null)
 
@@ -45,6 +48,19 @@ function App() {
 
   // Escena activa leída desde el archivo de datos del cuento.
   const currentScene = selectedStory.scenes[scene]
+
+  // Escuchamos cambios de tamaño para que la interfaz se adapte si giran tablet/móvil.
+  useEffect(() => {
+    function handleResize() {
+      setIsCompact(window.innerWidth < 768)
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
   // Recuperamos usuario si ya había sesión iniciada.
   useEffect(() => {
@@ -412,35 +428,38 @@ function App() {
 
   const primaryButtonStyle = {
     margin: '0.5rem',
-    padding: '0.8rem 1.2rem',
+    padding: '0.85rem 1.15rem',
     borderRadius: '12px',
     backgroundColor: '#1D3557',
     color: 'white',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '1rem'
+    fontSize: isCompact ? '0.95rem' : '1rem',
+    touchAction: 'manipulation'
   }
 
   const secondaryButtonStyle = {
     margin: '0.5rem',
-    padding: '0.8rem 1.2rem',
+    padding: '0.85rem 1.15rem',
     borderRadius: '12px',
     backgroundColor: '#A8DADC',
     color: '#1D3557',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '1rem'
+    fontSize: isCompact ? '0.95rem' : '1rem',
+    touchAction: 'manipulation'
   }
 
   const neutralButtonStyle = {
     margin: '0.5rem',
-    padding: '0.8rem 1.2rem',
+    padding: '0.85rem 1.15rem',
     borderRadius: '12px',
     backgroundColor: '#F6C977',
     color: '#1D3557',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '1rem'
+    fontSize: isCompact ? '0.95rem' : '1rem',
+    touchAction: 'manipulation'
   }
 
   const choiceButtonStyle = {
@@ -454,8 +473,10 @@ function App() {
     backgroundColor: '#1D3557',
     color: 'white',
     cursor: 'pointer',
-    fontSize: '1rem',
-    lineHeight: '1.4'
+    fontSize: isCompact ? '0.98rem' : '1rem',
+    lineHeight: '1.4',
+    touchAction: 'manipulation',
+    boxSizing: 'border-box'
   }
 
   const disabledButtonStyle = {
@@ -465,19 +486,23 @@ function App() {
   }
 
   const inputStyle = {
-    margin: '0.5rem',
-    padding: '0.75rem',
+    width: '100%',
+    maxWidth: '320px',
+    margin: '0.5rem auto',
+    padding: '0.9rem',
     borderRadius: '10px',
     border: '1px solid #A8DADC',
-    minWidth: '220px',
-    fontSize: '1rem'
+    fontSize: '1rem',
+    boxSizing: 'border-box',
+    display: 'block'
   }
 
   const statCardStyle = {
     padding: '0.9rem',
     borderRadius: '14px',
     backgroundColor: 'white',
-    border: '1px solid #A8DADC'
+    border: '1px solid #A8DADC',
+    overflowWrap: 'anywhere'
   }
 
   const barOuterStyle = {
@@ -489,10 +514,68 @@ function App() {
     marginTop: '0.35rem'
   }
 
+  const mainStyle = {
+    minHeight: '100vh',
+    backgroundColor: '#F1FAEE',
+    padding: isCompact ? '0.75rem' : '2rem',
+    fontFamily: 'Lexend Deca, Arial, sans-serif',
+    overflowX: 'hidden',
+    boxSizing: 'border-box'
+  }
+
+  const appContainerStyle = {
+    width: '100%',
+    maxWidth: '960px',
+    margin: '0 auto',
+    backgroundColor: 'white',
+    borderRadius: isCompact ? '20px' : '24px',
+    padding: isCompact ? '1rem' : '2rem',
+    boxShadow: '0 12px 34px rgba(29, 53, 87, 0.14)',
+    boxSizing: 'border-box'
+  }
+
+  const titleStyle = {
+    marginBottom: '0.5rem',
+    color: '#1D3557',
+    fontSize: isCompact ? '2rem' : '2.4rem',
+    lineHeight: '1.05'
+  }
+
+  const formSectionStyle = {
+    margin: '1.5rem auto',
+    padding: isCompact ? '1rem' : '1.2rem',
+    borderRadius: '18px',
+    backgroundColor: '#F1FAEE',
+    border: '1px solid #A8DADC',
+    textAlign: 'center',
+    boxSizing: 'border-box'
+  }
+
+  const textStyle = {
+    maxWidth: '760px',
+    margin: '0 auto 1.2rem auto',
+    color: '#1D3557',
+    fontSize: isCompact ? '1rem' : '1.12rem',
+    lineHeight: '1.7'
+  }
+
+  const gridStyle = {
+    display: 'grid',
+    gridTemplateColumns: isCompact ? '1fr' : 'repeat(auto-fit, minmax(190px, 1fr))',
+    gap: '0.8rem'
+  }
+
+  const scoreGridStyle = {
+    marginTop: '1rem',
+    display: 'grid',
+    gridTemplateColumns: isCompact ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '0.8rem'
+  }
+
   if (!currentScene) {
     return (
-      <main style={{ minHeight: '100vh', backgroundColor: '#F1FAEE', padding: '2rem', fontFamily: 'Lexend Deca, Arial, sans-serif' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', backgroundColor: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
+      <main style={mainStyle}>
+        <div style={appContainerStyle}>
           <h1 style={{ textAlign: 'center', color: '#1D3557' }}>Caminos de Atención</h1>
           <p>Escena no encontrada: {scene}</p>
           <button onClick={reiniciarRecorrido} style={primaryButtonStyle}>Volver al inicio</button>
@@ -502,24 +585,24 @@ function App() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', backgroundColor: '#F1FAEE', padding: '2rem', fontFamily: 'Lexend Deca, Arial, sans-serif' }}>
-      <div style={{ maxWidth: '960px', margin: '0 auto', backgroundColor: 'white', borderRadius: '24px', padding: '2rem', boxShadow: '0 12px 34px rgba(29, 53, 87, 0.14)' }}>
+    <main style={mainStyle}>
+      <div style={appContainerStyle}>
         <header style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <h1 style={{ marginBottom: '0.5rem', color: '#1D3557', fontSize: '2.4rem' }}>
+          <h1 style={titleStyle}>
             Caminos de Atención
           </h1>
-          <p style={{ margin: 0, color: '#457B9D', fontSize: '1rem' }}>{status}</p>
+          <p style={{ margin: 0, color: '#457B9D', fontSize: isCompact ? '0.95rem' : '1rem' }}>{status}</p>
         </header>
 
         {!authUser && (
-          <section style={{ margin: '1.5rem auto', padding: '1.2rem', borderRadius: '18px', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', textAlign: 'center' }}>
-            <h2 style={{ color: '#1D3557', marginTop: 0 }}>Acceso adulto</h2>
-            <p style={{ color: '#457B9D' }}>Inicia sesión para guardar el recorrido del cuento.</p>
+          <section style={formSectionStyle}>
+            <h2 style={{ color: '#1D3557', marginTop: 0, fontSize: isCompact ? '1.25rem' : '1.5rem' }}>Acceso adulto</h2>
+            <p style={{ color: '#457B9D', lineHeight: '1.5' }}>Inicia sesión para guardar el recorrido del cuento.</p>
 
             <input type="email" placeholder="Email del adulto" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
             <input type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
 
-            <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.3rem' }}>
               <button onClick={registrarse} style={primaryButtonStyle}>Registrarse</button>
               <button onClick={iniciarSesion} style={secondaryButtonStyle}>Iniciar sesión</button>
             </div>
@@ -534,7 +617,7 @@ function App() {
               </summary>
 
               <div style={{ marginTop: '1rem', color: '#1D3557' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.8rem' }}>
+                <div style={gridStyle}>
                   <div style={statCardStyle}>
                     <strong>Cuenta</strong>
                     <p style={{ margin: '0.4rem 0 0 0' }}>{authUser.email}</p>
@@ -556,7 +639,7 @@ function App() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.8rem' }}>
+                <div style={scoreGridStyle}>
                   <div style={statCardStyle}>
                     <strong>Calma acumulada</strong>
                     <p style={{ margin: '0.4rem 0 0 0' }}>{adultStats.calma}</p>
@@ -594,7 +677,7 @@ function App() {
                   {ultimasSesiones.length === 0 ? (
                     <p style={{ margin: '0.4rem 0 0 0' }}>Todavía no hay sesiones guardadas.</p>
                   ) : (
-                    <ul style={{ marginBottom: 0 }}>
+                    <ul style={{ marginBottom: 0, paddingLeft: '1.2rem' }}>
                       {ultimasSesiones.map((session) => (
                         <li key={session.id}>
                           {session.story_id} — {new Date(session.started_at).toLocaleString()}
@@ -604,13 +687,13 @@ function App() {
                   )}
                 </div>
 
-                <p style={{ marginTop: '1rem', color: '#457B9D', fontSize: '0.9rem' }}>
+                <p style={{ marginTop: '1rem', color: '#457B9D', fontSize: '0.9rem', lineHeight: '1.5' }}>
                   Este panel resume el recorrido del usuario adulto y ayuda a observar patrones generales entre calma y exploración.
                 </p>
               </div>
             </details>
 
-            <section style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <section style={{ textAlign: 'center', marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.25rem' }}>
               <button onClick={iniciarCuento} style={secondaryButtonStyle}>Iniciar cuento</button>
 
               <button onClick={volverAtras} disabled={history.length === 0} style={history.length === 0 ? disabledButtonStyle : neutralButtonStyle}>
@@ -634,24 +717,36 @@ function App() {
           <P5Scene scene={scene} image={currentScene.image} />
         </section>
 
-        {authUser && !sessionId && (
-          <p style={{ textAlign: 'center', fontStyle: 'italic', color: '#457B9D', fontSize: '1.05rem' }}>
-            Pulsa “Iniciar cuento” para comenzar la aventura.
-          </p>
+        {!sessionId && (
+          <section style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <h2 style={{ color: '#1D3557', fontSize: isCompact ? '1.45rem' : '1.8rem', marginBottom: '0.8rem' }}>
+              {currentScene.title}
+            </h2>
+
+            <p style={textStyle}>
+              {currentScene.text}
+            </p>
+
+            <p style={{ color: '#457B9D', fontStyle: 'italic', lineHeight: '1.5' }}>
+              {authUser
+                ? 'Pulsa “Iniciar cuento” para guardar el recorrido y comenzar la aventura.'
+                : 'Inicia sesión con una cuenta adulta para guardar el recorrido del cuento.'}
+            </p>
+          </section>
         )}
 
         {sessionId && (
           <section style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-            <h2 style={{ color: '#1D3557', fontSize: '1.8rem', marginBottom: '0.8rem' }}>
+            <h2 style={{ color: '#1D3557', fontSize: isCompact ? '1.45rem' : '1.8rem', marginBottom: '0.8rem' }}>
               {currentScene.title}
             </h2>
 
-            <p style={{ maxWidth: '760px', margin: '0 auto 1.2rem auto', color: '#1D3557', fontSize: '1.12rem', lineHeight: '1.7' }}>
+            <p style={textStyle}>
               {currentScene.text}
             </p>
 
             {currentScene.isEnding && (
-              <p style={{ maxWidth: '760px', margin: '0 auto 1.2rem auto', color: '#1D3557', fontSize: '1.12rem', lineHeight: '1.7' }}>
+              <p style={textStyle}>
                 {endingText}
               </p>
             )}

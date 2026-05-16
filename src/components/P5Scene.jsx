@@ -11,8 +11,8 @@ function P5Scene({ scene, image }) {
     container.innerHTML = ''
 
     const sketch = (p) => {
-      const CANVAS_W = 900
-      const CANVAS_H = 506
+      const CANVAS_W = Math.min(900, Math.max(280, container.clientWidth || 900))
+      const CANVAS_H = Math.round(CANVAS_W * 506 / 900)
 
       let img = null
       let imgLoaded = false
@@ -29,7 +29,10 @@ function P5Scene({ scene, image }) {
 
       p.setup = () => {
         const canvas = p.createCanvas(CANVAS_W, CANVAS_H)
-        canvas.elt.style.touchAction = 'none'
+        canvas.elt.style.width = '100%'
+        canvas.elt.style.height = 'auto'
+        canvas.elt.style.display = 'block'
+        canvas.elt.style.touchAction = 'pan-y'
 
         const imagePath = image
 
@@ -59,8 +62,8 @@ function P5Scene({ scene, image }) {
 
         for (let i = 0; i < 14; i++) {
           waves.push({
-            x: p.random(120, 780),
-            y: p.random(260, 430),
+            x: p.random(CANVAS_W * 0.13, CANVAS_W * 0.87),
+            y: p.random(CANVAS_H * 0.52, CANVAS_H * 0.85),
             r: p.random(8, 24),
             alpha: p.random(40, 100)
           })
@@ -68,10 +71,10 @@ function P5Scene({ scene, image }) {
 
         for (let i = 0; i < 11; i++) {
           butterflies.push({
-            x: p.random(80, 820),
-            y: p.random(90, 330),
-            homeX: p.random(80, 820),
-            homeY: p.random(90, 330),
+            x: p.random(CANVAS_W * 0.1, CANVAS_W * 0.9),
+            y: p.random(CANVAS_H * 0.18, CANVAS_H * 0.65),
+            homeX: p.random(CANVAS_W * 0.1, CANVAS_W * 0.9),
+            homeY: p.random(CANVAS_H * 0.18, CANVAS_H * 0.65),
             phase: p.random(p.TWO_PI),
             speed: p.random(0.35, 0.9),
             orbit: p.random(18, 46),
@@ -82,8 +85,8 @@ function P5Scene({ scene, image }) {
 
         for (let i = 0; i < 10; i++) {
           musicNotes.push({
-            x: p.random(120, 760),
-            y: p.random(120, 360),
+            x: p.random(CANVAS_W * 0.13, CANVAS_W * 0.85),
+            y: p.random(CANVAS_H * 0.22, CANVAS_H * 0.72),
             size: p.random(20, 34),
             speed: p.random(0.25, 0.7),
             phase: p.random(p.TWO_PI)
@@ -92,8 +95,8 @@ function P5Scene({ scene, image }) {
 
         for (let i = 0; i < 26; i++) {
           sparkles.push({
-            x: p.random(120, 780),
-            y: p.random(100, 390),
+            x: p.random(CANVAS_W * 0.13, CANVAS_W * 0.87),
+            y: p.random(CANVAS_H * 0.2, CANVAS_H * 0.78),
             size: p.random(7, 18),
             phase: p.random(p.TWO_PI),
             pulse: p.random(0.02, 0.055)
@@ -107,7 +110,7 @@ function P5Scene({ scene, image }) {
         if (!imgLoaded || !img) {
           p.fill(40)
           p.textAlign(p.CENTER, p.CENTER)
-          p.textSize(18)
+          p.textSize(16)
           p.text(`Cargando escena: ${scene}`, CANVAS_W / 2, CANVAS_H / 2)
           return
         }
@@ -141,19 +144,16 @@ function P5Scene({ scene, image }) {
       p.touchStarted = () => {
         updatePointerFromTouch()
         pointerActive = true
-        return false
       }
 
       p.touchMoved = () => {
         updatePointerFromTouch()
         pointerActive = true
-        return false
       }
 
       p.touchEnded = () => {
         pointerActive = false
         scatterButterflies()
-        return false
       }
 
       function updatePointerFromMouse() {
@@ -170,8 +170,8 @@ function P5Scene({ scene, image }) {
 
       function scatterButterflies() {
         butterflies.forEach((b) => {
-          b.homeX = p.random(80, 820)
-          b.homeY = p.random(90, 340)
+          b.homeX = p.random(CANVAS_W * 0.1, CANVAS_W * 0.9)
+          b.homeY = p.random(CANVAS_H * 0.18, CANVAS_H * 0.68)
           b.scatterX = p.random(-1.4, 1.4)
           b.scatterY = p.random(-0.8, 0.8)
         })
@@ -219,18 +219,19 @@ function P5Scene({ scene, image }) {
           b.x += p.sin(p.frameCount * 0.012 + b.phase) * 0.55
           b.y += p.sin(p.frameCount * 0.035 + b.phase) * 0.35
 
-          b.x = p.constrain(b.x, 40, CANVAS_W - 40)
-          b.y = p.constrain(b.y, 50, CANVAS_H - 50)
+          b.x = p.constrain(b.x, 30, CANVAS_W - 30)
+          b.y = p.constrain(b.y, 35, CANVAS_H - 35)
 
           const flap = p.sin(p.frameCount * 0.25 + b.phase) * 4
           const alpha = pointerActive ? 190 : 155
+          const sizeScale = CANVAS_W < 500 ? 0.8 : 1
 
           p.fill(255, 155, 65, alpha)
-          p.ellipse(b.x - 5, b.y, 12 + flap, 16)
-          p.ellipse(b.x + 5, b.y, 12 + flap, 16)
+          p.ellipse(b.x - 5 * sizeScale, b.y, (12 + flap) * sizeScale, 16 * sizeScale)
+          p.ellipse(b.x + 5 * sizeScale, b.y, (12 + flap) * sizeScale, 16 * sizeScale)
 
           p.fill(90, 80, 70, alpha)
-          p.ellipse(b.x, b.y, 3, 10)
+          p.ellipse(b.x, b.y, 3 * sizeScale, 10 * sizeScale)
         })
       }
 
@@ -246,8 +247,8 @@ function P5Scene({ scene, image }) {
           p.ellipse(w.x, w.y, w.r * 2, w.r)
 
           if (w.alpha <= 5 || w.r > 70) {
-            w.x = p.random(120, 780)
-            w.y = p.random(260, 430)
+            w.x = p.random(CANVAS_W * 0.13, CANVAS_W * 0.87)
+            w.y = p.random(CANVAS_H * 0.52, CANVAS_H * 0.85)
             w.r = p.random(8, 24)
             w.alpha = p.random(40, 100)
           }
@@ -279,14 +280,14 @@ function P5Scene({ scene, image }) {
           note.y += p.sin(p.frameCount * 0.025 + note.phase) * 0.45
 
           const alpha = 65 + p.sin(p.frameCount * 0.035 + note.phase) * 35
-          const size = note.size * 0.75
+          const size = note.size * (CANVAS_W < 500 ? 0.55 : 0.75)
 
           p.push()
           p.translate(note.x, note.y)
           p.rotate(p.sin(p.frameCount * 0.02 + note.phase) * 0.25)
 
           p.stroke(245, 255, 255, alpha)
-          p.strokeWeight(2)
+          p.strokeWeight(CANVAS_W < 500 ? 1.5 : 2)
           p.noFill()
 
           p.line(0, 0, 0, -size * 1.4)
@@ -301,7 +302,7 @@ function P5Scene({ scene, image }) {
 
           if (note.x > CANVAS_W + 40) {
             note.x = -40
-            note.y = p.random(120, 360)
+            note.y = p.random(CANVAS_H * 0.22, CANVAS_H * 0.72)
             note.size = p.random(20, 34)
             note.speed = p.random(0.25, 0.7)
             note.phase = p.random(p.TWO_PI)
@@ -329,7 +330,7 @@ function P5Scene({ scene, image }) {
           p.rotate(p.frameCount * 0.01 + sp.phase)
 
           p.stroke(255, 245, 190, alpha)
-          p.strokeWeight(1.8)
+          p.strokeWeight(CANVAS_W < 500 ? 1.3 : 1.8)
           p.noFill()
 
           p.line(-size, 0, size, 0)
@@ -352,7 +353,7 @@ function P5Scene({ scene, image }) {
 
         const alpha = 18 + p.sin(p.frameCount * 0.025) * 8
         p.fill(255, 245, 180, alpha)
-        p.ellipse(CANVAS_W / 2, CANVAS_H / 2, 560, 280)
+        p.ellipse(CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.62, CANVAS_H * 0.55)
 
         drawSparkles()
       }
@@ -375,7 +376,9 @@ function P5Scene({ scene, image }) {
         borderRadius: '20px',
         overflow: 'hidden',
         backgroundColor: '#f5f5f5',
-        boxShadow: '0 12px 30px rgba(0, 0, 0, 0.18)'
+        boxShadow: '0 12px 30px rgba(0, 0, 0, 0.18)',
+        touchAction: 'pan-y',
+        boxSizing: 'border-box'
       }}
     />
   )
