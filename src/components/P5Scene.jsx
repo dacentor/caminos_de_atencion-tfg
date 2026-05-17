@@ -81,8 +81,8 @@ function P5Scene({ scene, image }) {
           })
         }
 
-        // Mariposas interactivas. Tienen una posición propia y otra de “casa”
-        // para poder dispersarse cuando el usuario deja de tocar.
+        // Mariposas interactivas.
+        // Cada una recibe un color suave diferente para que la escena sea más rica visualmente.
         for (let i = 0; i < 11; i++) {
           butterflies.push({
             x: p.random(CANVAS_W * 0.1, CANVAS_W * 0.9),
@@ -93,7 +93,8 @@ function P5Scene({ scene, image }) {
             speed: p.random(0.35, 0.9),
             orbit: p.random(18, 46),
             scatterX: p.random(-1.2, 1.2),
-            scatterY: p.random(-0.7, 0.7)
+            scatterY: p.random(-0.7, 0.7),
+            color: getRandomButterflyColor()
           })
         }
 
@@ -145,6 +146,22 @@ function P5Scene({ scene, image }) {
         p.drawingContext.drawImage(img, x, y, drawW, drawH)
 
         drawSceneEffects()
+      }
+
+      // Paleta sencilla para las mariposas.
+      // Son colores vivos pero no demasiado agresivos para mantener el tono amable del cuento.
+      function getRandomButterflyColor() {
+        const palette = [
+          { r: 255, g: 155, b: 65 },
+          { r: 255, g: 204, b: 92 },
+          { r: 168, g: 218, b: 220 },
+          { r: 120, g: 190, b: 255 },
+          { r: 210, g: 150, b: 255 },
+          { r: 255, g: 145, b: 180 },
+          { r: 145, g: 220, b: 155 }
+        ]
+
+        return p.random(palette)
       }
 
       // Interacción con ratón para ordenador.
@@ -251,13 +268,18 @@ function P5Scene({ scene, image }) {
           b.y = p.constrain(b.y, 35, CANVAS_H - 35)
 
           const flap = p.sin(p.frameCount * 0.25 + b.phase) * 4
-          const alpha = pointerActive ? 190 : 155
+          const alpha = pointerActive ? 205 : 170
           const sizeScale = CANVAS_W < 500 ? 0.8 : 1
 
-          // Alas.
-          p.fill(255, 155, 65, alpha)
+          // Alas con color propio de cada mariposa.
+          p.fill(b.color.r, b.color.g, b.color.b, alpha)
           p.ellipse(b.x - 5 * sizeScale, b.y, (12 + flap) * sizeScale, 16 * sizeScale)
           p.ellipse(b.x + 5 * sizeScale, b.y, (12 + flap) * sizeScale, 16 * sizeScale)
+
+          // Un brillo suave encima para que no queden planas.
+          p.fill(255, 255, 255, 45)
+          p.ellipse(b.x - 6 * sizeScale, b.y - 2 * sizeScale, 5 * sizeScale, 7 * sizeScale)
+          p.ellipse(b.x + 6 * sizeScale, b.y - 2 * sizeScale, 5 * sizeScale, 7 * sizeScale)
 
           // Cuerpo.
           p.fill(90, 80, 70, alpha)
