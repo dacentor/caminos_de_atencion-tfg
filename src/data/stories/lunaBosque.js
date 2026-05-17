@@ -131,7 +131,7 @@ export const lunaBosque = {
     // El sonido de agua está más bajo para que acompañe sin molestar.
     escena_2: {
       title: 'El puente de ramas',
-      text: 'Luna, Kiro y Mika llegan a un río que corta el camino. Kiro empieza a hacer un puente con ramas. Mientras tanto, Mika ve mariposas de colores junto al rio y llama a Luna.',
+      text: 'Luna, Kiro y Mika llegan a un río que corta el camino. Kiro empieza a hacer un puente con ramas. Mientras tanto, Mika ve mariposas de colores en la orilla y llama a Luna.',
       image: '/assets/rio.png',
       audio: {
         ambient: {
@@ -169,7 +169,7 @@ export const lunaBosque = {
     // Luna explora con Mika, pero después vuelve al camino principal.
     escena_2A: {
       title: 'Resultado del puente',
-      text: 'Luna va con Mika hacia el brillo. Entre los árboles descubre mariposas de distintos colores. Después vuelve con Kiro para cruzar el puente.',
+      text: 'Luna va con Mika hacia el río. En la orilla descubre mariposas volando de distintos colores. Después vuelve con Kiro para cruzar el puente.',
       image: '/assets/rioA.png',
       audio: {
         ambient: {
