@@ -28,6 +28,9 @@ function P5Scene({ scene, image }) {
       const butterflies = []
       const musicNotes = []
       const sparkles = []
+      const openingLeaves = []
+      const openingLights = []
+      const openingFlowers = []
 
       // Variables para saber si el usuario está tocando o pulsando la escena.
       let pointerActive = false
@@ -117,6 +120,48 @@ function P5Scene({ scene, image }) {
             size: p.random(7, 18),
             phase: p.random(p.TWO_PI),
             pulse: p.random(0.02, 0.055)
+          })
+        }
+
+        // Detalles suaves para la portada: hojas, luces y flores.
+        // Refuerzan lo que dice el texto inicial sin recargar demasiado la imagen.
+        for (let i = 0; i < 16; i++) {
+          openingLeaves.push({
+            x: p.random(CANVAS_W * 0.05, CANVAS_W * 0.95),
+            y: p.random(CANVAS_H * 0.05, CANVAS_H * 0.55),
+            size: p.random(6, 12),
+            speed: p.random(0.15, 0.45),
+            phase: p.random(p.TWO_PI),
+            color: p.random([
+              { r: 98, g: 150, b: 76 },
+              { r: 125, g: 170, b: 82 },
+              { r: 210, g: 150, b: 55 }
+            ])
+          })
+        }
+
+        for (let i = 0; i < 14; i++) {
+          openingLights.push({
+            x: p.random(CANVAS_W * 0.12, CANVAS_W * 0.9),
+            y: p.random(CANVAS_H * 0.12, CANVAS_H * 0.48),
+            size: p.random(5, 13),
+            phase: p.random(p.TWO_PI),
+            pulse: p.random(0.025, 0.055)
+          })
+        }
+
+        for (let i = 0; i < 9; i++) {
+          openingFlowers.push({
+            x: p.random(CANVAS_W * 0.1, CANVAS_W * 0.9),
+            y: p.random(CANVAS_H * 0.72, CANVAS_H * 0.92),
+            size: p.random(5, 9),
+            phase: p.random(p.TWO_PI),
+            color: p.random([
+              { r: 255, g: 235, b: 120 },
+              { r: 255, g: 170, b: 190 },
+              { r: 210, g: 170, b: 255 },
+              { r: 255, g: 255, b: 235 }
+            ])
           })
         }
       }
@@ -220,6 +265,10 @@ function P5Scene({ scene, image }) {
       // Según la escena activa, dibujamos un efecto visual distinto.
       // Así el mismo componente p5 sirve para todo el cuento.
       function drawSceneEffects() {
+        if (scene === 'escena_1') {
+          drawOpeningForestDetails()
+        }
+
         if (scene === 'escena_1A' || scene === 'escena_2A') {
           drawButterflies()
         }
@@ -240,6 +289,72 @@ function P5Scene({ scene, image }) {
         if (scene === 'escena_5' || scene === 'escena_5A' || scene === 'escena_5B') {
           drawCalmGlow()
         }
+      }
+
+      function drawOpeningForestDetails() {
+        // Pequeñas luces entre los árboles.
+        openingLights.forEach((light) => {
+          const alpha = 45 + p.sin(p.frameCount * light.pulse + light.phase) * 35
+          const size = light.size + p.sin(p.frameCount * light.pulse + light.phase) * 3
+
+          p.noStroke()
+          p.fill(255, 235, 150, alpha)
+          p.ellipse(light.x, light.y, size * 2.2, size * 2.2)
+
+          p.fill(255, 255, 225, alpha + 20)
+          p.ellipse(light.x, light.y, size * 0.7, size * 0.7)
+        })
+
+        // Hojas moviéndose con el viento.
+        openingLeaves.forEach((leaf) => {
+          leaf.x += leaf.speed
+          leaf.y += p.sin(p.frameCount * 0.025 + leaf.phase) * 0.35
+
+          if (leaf.x > CANVAS_W + 20) {
+            leaf.x = -20
+            leaf.y = p.random(CANVAS_H * 0.05, CANVAS_H * 0.55)
+          }
+
+          p.push()
+          p.translate(leaf.x, leaf.y)
+          p.rotate(p.sin(p.frameCount * 0.025 + leaf.phase) * 0.5)
+
+          p.noStroke()
+          p.fill(leaf.color.r, leaf.color.g, leaf.color.b, 110)
+          p.ellipse(0, 0, leaf.size * 1.7, leaf.size)
+
+          p.stroke(80, 110, 60, 70)
+          p.strokeWeight(1)
+          p.line(-leaf.size * 0.5, 0, leaf.size * 0.5, 0)
+
+          p.pop()
+        })
+
+        // Flores pequeñas en la parte baja de la imagen.
+        openingFlowers.forEach((flower) => {
+          const sway = p.sin(p.frameCount * 0.025 + flower.phase) * 1.5
+
+          p.noStroke()
+          p.fill(70, 140, 80, 120)
+          p.rect(flower.x + sway, flower.y, 1.5, flower.size * 2)
+
+          p.fill(flower.color.r, flower.color.g, flower.color.b, 160)
+          for (let i = 0; i < 5; i++) {
+            const angle = (p.TWO_PI / 5) * i
+            p.ellipse(
+              flower.x + sway + p.cos(angle) * flower.size * 0.7,
+              flower.y + p.sin(angle) * flower.size * 0.7,
+              flower.size,
+              flower.size
+            )
+          }
+
+          p.fill(245, 190, 70, 180)
+          p.ellipse(flower.x + sway, flower.y, flower.size * 0.8, flower.size * 0.8)
+        })
+
+        // Unas pocas mariposas suaves también en portada.
+        drawButterflies()
       }
 
       function drawButterflies() {
@@ -268,8 +383,8 @@ function P5Scene({ scene, image }) {
           b.y = p.constrain(b.y, 35, CANVAS_H - 35)
 
           const flap = p.sin(p.frameCount * 0.25 + b.phase) * 4
-          const alpha = pointerActive ? 205 : 170
-          const sizeScale = CANVAS_W < 500 ? 0.8 : 1
+          const alpha = scene === 'escena_1' ? 135 : pointerActive ? 205 : 170
+          const sizeScale = scene === 'escena_1' ? (CANVAS_W < 500 ? 0.55 : 0.68) : CANVAS_W < 500 ? 0.8 : 1
 
           // Alas con color propio de cada mariposa.
           p.fill(b.color.r, b.color.g, b.color.b, alpha)
